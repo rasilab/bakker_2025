@@ -1,0 +1,5 @@
+owner,sample_name,condition,enzyme,illumina_sample_id,sample_id
+rb,invivo_tadaln,in_vivo,tada_ln,rb_i79_p21_S1,i79_p21
+rb,invivo_gfpnb,in_vivo,tada_gfpnb,rb_i79_p22_S2,i79_p22
+rb,invivo_noenzyme,in_vivo,none,rb_i79_p23_S3,i79_p23
+

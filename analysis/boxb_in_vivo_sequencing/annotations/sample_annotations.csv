@@ -1,0 +1,4 @@
+owner,sample_name,sample_id,barcode1_read,barcode1_start,barcode1_length,umi_read,umi_start,umi_length,linkage_ref_barcode_column
+rb,invivo_tadaln,i79_p21,1,1,10,2,1,7,2
+rb,invivo_gfpnb,i79_p22,1,1,10,2,1,7,2
+rb,invivo_no_enzyme,i79_p23,1,1,10,2,1,7,2

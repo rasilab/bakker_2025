@@ -1,0 +1,2 @@
+owner,sample_name,library_type,illumina_sample_id,sample_id,barcode_read,barcode_start,barcode_length,insert_read,insert_start,insert_length,run_id,s3_location
+rb,ln_dms_linkage,plasmid,rb_ln_dms_linkage_mt_1LH1B_gdna,rb_ln_dms_linkage_mt_1LH1B_gdna,1,60,20,1,106,66,250211_M04866_0739_000000000-DR6HN,s3://fh-pi-subramaniam-a-eco/git_repos/iriboseq/analysis/rbakker/deepseq/2025-02-13_i84_ln_dms/linkage/fastq

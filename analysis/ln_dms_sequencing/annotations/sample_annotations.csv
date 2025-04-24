@@ -1,0 +1,2 @@
+owner,sample_name,library_type,illumina_sample_id,sample_id,barcode_read,barcode_start,barcode_length,recorder_read,recorder_start,recorder_length,run_id,s3_location,linkage_ref_barcode_column,barcode_linkage_file
+rb,ln_dms,RNA,i84p1,i84p1,1,60,20,1,23,17,250211_,s3://fh-pi-subramaniam-a-eco/git_repos/iriboseq/analysis/rbakker/deepseq/2025-02-13_i84_ln_dms/fastq/,3,"../data/filtered_barcodes/filtered_barcodes_linkage.csv"
