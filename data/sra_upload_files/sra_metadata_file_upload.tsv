@@ -1,0 +1,2 @@
+sample_name	library_ID	title	library_strategy	library_source	library_selection	library_layout	platform	instrument_model	design_description	filetype	fasta_file	assembly	filename	filename2	filename3	filename4	filename5	filename6	filename7	filename8
+rb_i84p1_ln_dms	rb_i84p1_ln_dms	Lambda N DMS RNA barcode sequencing	AMPLICON	SYNTHETIC	PCR	single	ILLUMINA	Illumina MiSeq	barcodes amplified from mRNA by reverse transcription and PCR with Illumina sequencing adapters	fastq			rb_i84p1_ln_dms_S1_R1_001.fastq.gz							
