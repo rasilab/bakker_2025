@@ -1,20 +1,14 @@
----
-title: Deaminase-based RNA recording enables high throughput mutational profiling of protein-RNA interactions
----
+# Deaminase-based RNA recording enables high throughput mutational profiling of protein-RNA interactions
 
-Rachael A. Bakker^1,2^, Oliver B. Nicholson^1^, Heungwon Park^1,2^, Yu-Lan Xiao^3^, Weixin Tang^3^, Arvind Rasi Subramaniam^1,2,†^, and Christopher P. Lapointe^1,†^
+Rachael A. Bakker<sup>1,2</sup>, Oliver B. Nicholson<sup>1</sup>, Heungwon Park<sup>1,2</sup>, Yu-Lan Xiao<sup>3</sup>, Weixin Tang<sup>3</sup>, Arvind Rasi Subramaniam<sup>1,2,†</sup>, and Christopher P. Lapointe<sup>1,†</sup>
 
-^1^ Basic Sciences Division,
-Fred Hutchinson Cancer Center, Seattle, WA 98109, USA,
+<sup>1</sup> Basic Sciences Division, Fred Hutchinson Cancer Center, Seattle, WA 98109, USA  
+<sup>2</sup> Computational Biology Section of the Public Health Sciences Division,  Fred Hutchinson Cancer Center, Seattle, WA 98109, USA  
+<sup>3</sup> Department of Chemistry and Institute for Biophysical Dynamics,  The University of Chicago, Chicago, IL 60637, USA  
 
-^2^ Computational Biology Section of the Public Health Sciences Division,
-Fred Hutchinson Cancer Center, Seattle, WA 98109, USA
+<sup>†</sup> **Corresponding authors:** A.R.S: <rasi@fredhutch.org>, C.P.L: <cplapointe@fredhutch.org>
 
-^3^ Department of Chemistry and Institute for Biophysical Dynamics, The University of Chicago, Chicago, IL 60637, USA
 
- ^†^ Corresponding authors: A.R.S: <rasi@fredhutch.org>, C.P.L. <cplapointe@fredhutch.org>
-
-\linenumbers
 
 # Abstract
 
@@ -40,6 +34,4 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 
 ## Useful Docker containers for interactive analyses using Jupyter Notebooks
 
-- [R](https://github.com/rasilab/r/pkgs/container/r)
-- [Python](https://github.com/rasilab/python/pkgs/container/python)
 - [R and Python](https://github.com/rasilab/r_python/pkgs/container/r_python)
