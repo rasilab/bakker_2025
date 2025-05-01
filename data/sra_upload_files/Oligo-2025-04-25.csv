@@ -1,0 +1,3 @@
+user	organism	refid	desc	seq	date	source	link	reference	usefulseq	comment	location
+rasi	H. sapiens	oAS2588	pEF1_MluI_Bxb1attBR_Kozak_ATG_F	ggtgtcgtgaaaactaccccaagctggccacgcgtcatccgcgCTAGCCACCATG	2025-04-29	rasi	https://github.com/rasilab/mito_relic/issues/21		0a_from_pAS679_pSBbi-Hyg-tdMCP-iRFP	to clone ER/mito/cyto localized MCP into sleeping beauty vector	Rasi oligo box 26
+rasi	H. sapiens	oAS2589	2xMCP_KpnI_iRFP_R	gcaggaggtgagatcgaccttacgcgccatGGTACCgtagatgccgctgttggcggcgat	2025-04-29	rasi	https://github.com/rasilab/mito_relic/issues/21		0a_from_pAS679_pSBbi-Hyg-tdMCP-iRFP	to clone ER/mito/cyto localized MCP into sleeping beauty vector	Rasi oligo box 26
