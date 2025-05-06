@@ -32,6 +32,48 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 
 - To reproduce the analysis on a cluster, load Singularity and Snakemake (or activate the Conda environment with these software). Ensure that all necessary folders are mounted using `--bind` in [analysis/submit_cluster.sh](./analysis/submit_cluster.sh) and [analysis/submit_local.sh](./analysis/submit_local.sh). These folder locations will be specific to your computing environment. If the correct location is not mounted, you will get `path not found` error in Snakemake workflows that use Singularity containers.
 
+- You may not want to completely re-run the entire pipeline. Within each sequencing experiment's data folder is a script to download the analyzed data from sw3 for generating the figures.
+
 ## Useful Docker containers for interactive analyses using Jupyter Notebooks
 
 - [R and Python](https://github.com/rasilab/r_python/pkgs/container/r_python)
+
+## Guide to Figure Panels
+
+| Figure Panel      | Folder                                           |
+| :---------------- | :----------------------------------------------- |
+| 2B                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 2C                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 2D                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 2E                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 3B                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 3C                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 3D                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 3I                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 3J                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 4C                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 4D                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 4E                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 4F                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 5B                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 5C                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 5D                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 5E                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 5F                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 5G                | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| 6B                | /ln_dms_sequencing/generate_figures.ipynb        |
+| 6B Summary Strips | /ln_dms_sequencing/generate_figures.ipynb        |
+| 6C                | /ln_dms_sequencing/generate_figures.ipynb        |
+| S1A               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S1B               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S2A               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S2B               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S2C               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S2D               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S3B               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S3C               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S3D               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S3E               | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| S4A               | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| S4B               | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
+| S5B               | /ln_dms_sequencing/generate_figures.ipynb        |
