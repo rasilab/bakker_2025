@@ -42,8 +42,8 @@ rule all:
 def get_split_read_files_input(wildcards):
   """This function returns the names of R1,R2 files for combining them
   """
-  filenames = [f'../data/fastq/fastq/{filename}' 
-      for filename in filter(lambda x: re.search(f'{wildcards.sample_id}_', x) and re.search('_R[123]_', x) and x.endswith('.fastq'), os.listdir('../data/fastq/fastq'))]
+  filenames = [f'../data/fastq/{filename}' 
+      for filename in filter(lambda x: re.search(f'{wildcards.sample_id}_', x) and re.search('_R[123]_', x) and x.endswith('.fastq'), os.listdir('../data/fastq'))]
   if len(filenames) == 0:
       raise FileNotFoundError(f"No input FASTQ files for {wildcards.sample_id}!") 
   if len(filenames) > 3:
