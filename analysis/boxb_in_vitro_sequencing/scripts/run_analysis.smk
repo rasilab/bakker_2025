@@ -70,31 +70,25 @@ rule calculate_summary_stats:
         R1 = "../data/split_fastq/{sample_id}/{barcode}_R1.fastq",
         R2 = "../data/split_fastq/{sample_id}/{barcode}_R2.fastq",
         barcode_annotations = "../annotations/barcode_annotations.csv",
-        notebook = "calculate_summary_stats_for_each_barcode.ipynb"
+        script = "calculate_summary_stats_for_each_barcode.py"
     output: "../data/summary_stats/{sample_id}/{barcode}.csv"
     container: "docker://ghcr.io/rasilab/python:1.0.0"
     shell:
         """
-        jupyter nbconvert --to script {input.notebook}
-        notebook={input.notebook}
-        script="${{notebook/.ipynb/.py}}"
-        python ${{script}} {input.barcode_annotations} {input.R1} {input.R2} {output} {wildcards.barcode}
+        python {input.script} {input.barcode_annotations} {input.R1} {input.R2} {output} {wildcards.barcode}
         """
 
 
 rule combine_summary_stats:
     input: ['../data/summary_stats/{sample_id}/' + f'{barcode}.csv' for barcode in barcodes.index],
-        notebook = "combine_barcode_summary_stats.ipynb"
+        script = "combine_barcode_summary_stats.R"
     output: "../data/summary_stats_combined/{sample_id}.csv.gz"
     container: "docker://ghcr.io/rasilab/r:1.0.0"
     params:
         input_folder = "../data/summary_stats/{sample_id}"
     shell:
         """
-        jupyter nbconvert --to script --ExecutePreprocessor.kernel_name=ir {input.notebook}
-        notebook={input.notebook}
-        script="${{notebook/.ipynb/.r}}"
-        Rscript ${{script}} {params.input_folder} {output}
+        Rscript {input.script} {params.input_folder} {output}
         """
 
 rule calculate_boxb_loop_stats:
@@ -102,30 +96,24 @@ rule calculate_boxb_loop_stats:
         R1 = "../data/split_fastq/{sample_id}/{barcode}_R1.fastq",
         R2 = "../data/split_fastq/{sample_id}/{barcode}_R2.fastq",
         barcode_annotations = "../annotations/barcode_annotations.csv",
-        notebook = "calculate_boxb_loop_editing.ipynb"
+        script = "calculate_boxb_loop_editing.py"
     output: "../data/boxb_editing_stats/{sample_id}/{barcode}.csv"
     container: "docker://ghcr.io/rasilab/python:1.0.0"
     shell:
         """
-        jupyter nbconvert --to script {input.notebook}
-        notebook={input.notebook}
-        script="${{notebook/.ipynb/.py}}"
-        python ${{script}} {input.barcode_annotations} {input.R1} {input.R2} {output} {wildcards.barcode}
+        python {input.script} {input.barcode_annotations} {input.R1} {input.R2} {output} {wildcards.barcode}
         """
 
 rule combine_boxb_stats:
     input: ['../data/boxb_editing_stats/{sample_id}/' + f'{barcode}.csv' for barcode in barcodes.index],
-        notebook = "combine_barcode_summary_stats.ipynb"
+        script = "combine_barcode_summary_stats.R"
     output: "../data/boxb_stats_combined/{sample_id}.csv.gz"
     container: "docker://ghcr.io/rasilab/r:1.0.0"
     params:
         input_folder = "../data/boxb_editing_stats/{sample_id}"
     shell:
         """
-        jupyter nbconvert --to script --ExecutePreprocessor.kernel_name=ir {input.notebook}
-        notebook={input.notebook}
-        script="${{notebook/.ipynb/.r}}"
-        Rscript ${{script}} {params.input_folder} {output}
+        Rscript {input.script} {params.input_folder} {output}
         """
 
 rule calculate_hairpin_energy:

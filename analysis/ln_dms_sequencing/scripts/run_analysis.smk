@@ -88,16 +88,3 @@ rule subset_to_linked_barcodes:
     """
 
 
-rule calculate_summary_stats:
-    input: 
-        linked_barcode_recorder_file= '../data/linked_barcodes/{sample_id}.csv',
-        notebook = "calculate_summary_stats_for_each_barcode.ipynb"
-    output: "../data/summary_stats/{sample_id}/{barcode}.csv"
-    container: "docker://ghcr.io/rasilab/python:1.0.0"
-    shell:
-        """
-        jupyter nbconvert --to script {input.notebook}
-        notebook={input.notebook}
-        script="${{notebook/.ipynb/.py}}"
-        python ${{script}} {input.barcode_annotations} {input.R1} {input.R2} {output} {wildcards.barcode}
-        """

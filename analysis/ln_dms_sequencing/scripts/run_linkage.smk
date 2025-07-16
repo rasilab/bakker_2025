@@ -176,7 +176,7 @@ rule filter_barcodes:
   input:
     bam1 = '../data/ref_vs_ref_alignments/filtered_barcodes_linkage/alignment_barcode1.bam',
     counts = expand('../data/annotated_insert_barcode_counts/{sample_id}.csv', sample_id=sample_annotations.index),
-    notebook = 'filter_barcodes.ipynb',
+    script = 'filter_barcodes.R',
   output:
     '../data/filtered_barcodes/filtered_barcodes_linkage.csv',
   params:
@@ -186,10 +186,5 @@ rule filter_barcodes:
   container: 'docker://ghcr.io/rasilab/r:1.0.0'
   shell:
     """
-    jupyter nbconvert --to script --ExecutePreprocessor.kernel_name=ir {input.notebook}
-
-    notebook={input.notebook}
-    script="${{notebook/.ipynb/.r}}"
-
-    Rscript ${{script}} {input.bam1} {input.counts} {params.read_count_cutoff} {output} &> {log}
+    Rscript {input.script} {input.bam1} {input.counts} {params.read_count_cutoff} {output} &> {log}
     """
