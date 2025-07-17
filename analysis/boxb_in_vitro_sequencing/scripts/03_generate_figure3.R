@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Module 3: Figure 3 Generation (BoxB Variants)
+# Module 3: Figure 3 Generation (BoxB Variants) - FIXED TO MATCH ORIGINAL
 # Generate Figure 3 panels analyzing BoxB loop and stem variants
 
 options(warn = -1)
@@ -32,20 +32,72 @@ dir.create("../tables", showWarnings = FALSE, recursive = TRUE)
 
 cat("Calculating BoxB variant statistics...\n")
 
-# Calculate stats per boxb insert (with proper aggregation)
+# FIRST: Create stats_per_boxb_insert for GNRA plot (editing_per_loop_variant)
+# Using EXACT parameters from original script
 stats_per_boxb_insert <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p2","i79_p8","i79_p10","i79_p20")) %>%
+    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p3","i79_p4","i79_p8")) %>%
     filter(umi_counts>200)%>%
     mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
         fraction_edited=1-fraction_num_0_c)%>%
     select(tada_type,tada_conc,variable_subpos,insert, fraction_edited) %>%
-    group_by(tada_type,tada_conc,variable_subpos,insert)%>%
+    group_by(tada_type,variable_subpos,insert)%>%  # Note: NO tada_conc in grouping (original logic)
+    left_join(hairpin_annotations,by=c("variable_subpos","insert"))
+
+loop_data_tmp <- stats_per_boxb_insert %>%
+    filter(variable_subpos %in% c("7_10"))%>%
+    mutate(boxb_7=str_sub(insert,4,4),
+        boxb_8=str_sub(insert,3,3),
+        boxb_9=str_sub(insert,2,2),
+        boxb_10=str_sub(insert,1,1),
+        boxb_11="C",
+        boxb_12="T",
+        boxb_13="T")
+
+editing_per_loop_variant <- stats_per_boxb_insert %>%
+    filter(variable_subpos %in% c("10_13"))%>%
+    mutate(boxb_7="A",
+        boxb_8="C",
+        boxb_9="T",
+        boxb_10=str_sub(insert,4,4),
+        boxb_11=str_sub(insert,3,3),
+        boxb_12=str_sub(insert,2,2),
+        boxb_13=str_sub(insert,1,1))%>%
+    bind_rows(loop_data_tmp)%>%
+    mutate(gnra=boxb_8=="C"&(boxb_10=="T"|boxb_10=="C")&boxb_12=="T",
+        boxb_8_rc=case_when(
+        boxb_8=="A" ~ "T",
+        boxb_8=="C" ~ "G",
+        boxb_8=="G" ~ "C",
+        boxb_8=="T" ~ "A"
+        ), boxb_10_rc=case_when(
+        boxb_10=="A" ~ "T",
+        boxb_10=="C" ~ "G",
+        boxb_10=="G" ~ "C",
+        boxb_10=="T" ~ "A"
+        ), boxb_12_rc=case_when(
+        boxb_12=="A" ~ "T",
+        boxb_12=="C" ~ "G",
+        boxb_12=="G" ~ "C",
+        boxb_12=="T" ~ "A"
+        ))%>%
+        filter(boxb_7=="A"&boxb_13=="T")
+
+write_tsv(editing_per_loop_variant,"../tables/editing_per_loop_variant.tsv")
+
+# SECOND: Create stats_per_boxb_insert for heatmaps (mean_editing_per_loop_variant) 
+# Using EXACT parameters from original script
+stats_per_boxb_insert <- target_data %>%
+    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p2","i79_p8","i79_p10","i79_p20")) %>%
+    # NO umi_counts filter for heatmaps (original behavior)
+    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+        fraction_edited=1-fraction_num_0_c)%>%
+    select(tada_type,tada_conc,variable_subpos,insert, fraction_edited) %>%
+    group_by(tada_type,tada_conc,variable_subpos,insert)%>%  # Note: INCLUDES tada_conc in grouping (original logic)
     summarize(across(matches("fraction_"),~mean(.x),.names="mean_{col}"),
     across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
     .groups = "drop")%>%
     left_join(hairpin_annotations,by=c("variable_subpos","insert"))
 
-# Calculate loop variants
 loop_data_tmp <- stats_per_boxb_insert %>%
     filter(variable_subpos %in% c("7_10"))%>%
     mutate(boxb_7=str_sub(insert,4,4),
@@ -68,81 +120,39 @@ mean_editing_per_loop_variant <- stats_per_boxb_insert %>%
     bind_rows(loop_data_tmp)%>%
     mutate(gnra=boxb_8=="C"&(boxb_10=="T"|boxb_10=="C")&boxb_12=="T",
         boxb_8_rc=case_when(
-        boxb_8=="A" ~ "U",
+        boxb_8=="A" ~ "T",
         boxb_8=="C" ~ "G",
         boxb_8=="G" ~ "C",
         boxb_8=="T" ~ "A"
         ), boxb_10_rc=case_when(
-        boxb_10=="A" ~ "U",
+        boxb_10=="A" ~ "T",
         boxb_10=="C" ~ "G",
         boxb_10=="G" ~ "C",
         boxb_10=="T" ~ "A"
         ), boxb_12_rc=case_when(
-        boxb_12=="A" ~ "U",
+        boxb_12=="A" ~ "T",
         boxb_12=="C" ~ "G",
         boxb_12=="G" ~ "C",
         boxb_12=="T" ~ "A"
-        ),boxb_7_rc=case_when(
-        boxb_7=="A" ~ "U",
+        ), boxb_7_rc=case_when(
+        boxb_7=="A" ~ "T",
         boxb_7=="C" ~ "G",
         boxb_7=="G" ~ "C",
         boxb_7=="T" ~ "A"
         ), boxb_13_rc=case_when(
-        boxb_13=="A" ~ "U",
+        boxb_13=="A" ~ "T",
         boxb_13=="C" ~ "G",
         boxb_13=="G" ~ "C",
-        boxb_13=="T" ~ "A")
-    )
+        boxb_13=="T" ~ "A"
+        ))
 
-# Create editing_per_loop_variant for individual data points
-editing_per_loop_variant <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p2","i79_p8","i79_p10","i79_p20")) %>%
-    filter(umi_counts>200)%>%
-    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-        fraction_edited=1-fraction_num_0_c)%>%
-    select(tada_type,tada_conc,variable_subpos,insert, fraction_edited) %>%
-    left_join(hairpin_annotations,by=c("variable_subpos","insert")) %>%
-    # Add the same boxb position calculations
-    mutate(
-        boxb_7 = case_when(
-            variable_subpos == "7_10" ~ str_sub(insert,4,4),
-            variable_subpos == "10_13" ~ "A"
-        ),
-        boxb_8 = case_when(
-            variable_subpos == "7_10" ~ str_sub(insert,3,3),
-            variable_subpos == "10_13" ~ "C"
-        ),
-        boxb_9 = case_when(
-            variable_subpos == "7_10" ~ str_sub(insert,2,2),
-            variable_subpos == "10_13" ~ "T"
-        ),
-        boxb_10 = case_when(
-            variable_subpos == "7_10" ~ str_sub(insert,1,1),
-            variable_subpos == "10_13" ~ str_sub(insert,4,4)
-        ),
-        boxb_11 = case_when(
-            variable_subpos == "7_10" ~ "C",
-            variable_subpos == "10_13" ~ str_sub(insert,3,3)
-        ),
-        boxb_12 = case_when(
-            variable_subpos == "7_10" ~ "T",
-            variable_subpos == "10_13" ~ str_sub(insert,2,2)
-        ),
-        boxb_13 = case_when(
-            variable_subpos == "7_10" ~ "T",
-            variable_subpos == "10_13" ~ str_sub(insert,1,1)
-        )
-    ) %>%
-    mutate(gnra=boxb_8=="C"&(boxb_10=="T"|boxb_10=="C")&boxb_12=="T") %>%
-    filter(boxb_7=="A"&boxb_13=="T")
-
-write_tsv(editing_per_loop_variant,"../tables/editing_per_loop_variant.tsv")
 write_tsv(mean_editing_per_loop_variant,"../tables/mean_editing_per_loop_variant.tsv")
 
-# Calculate stem variant stats  
+# Calculate stem variant stats - EXACT parameters from original
 mean_editing_per_stem_variant <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p4","i79_p8")) %>%
-    filter(umi_counts>50)%>%
+    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p5","i79_p6","i79_p10","i79_p20","i79_p2","i79_p4","i79_p8","i79_p7")) %>%
+    filter(variable_subpos %in% c("1_3","4_6","14_16","17_19")) %>%
+    # NO umi_counts filter (original behavior)
     mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
         fraction_edited=1-fraction_num_0_c)%>%
     select(tada_type,tada_conc,condition,variable_subpos,insert, fraction_edited) %>%
@@ -159,7 +169,7 @@ write_tsv(mean_editing_per_stem_variant,"../tables/mean_editing_per_stem_variant
 
 cat("Generating Figure 3 plots...\n")
 
-# Generate GNRA plot
+# Generate GNRA plot - using editing_per_loop_variant
 gnra_plot <- editing_per_loop_variant %>%
     filter(tada_type=="lambdaN",tada_conc=="250nM")%>%
     ggplot(aes(x=gnra,y=fraction_edited*100,fill=gnra))+
@@ -191,7 +201,7 @@ gnra_plot <- editing_per_loop_variant %>%
 print(gnra_plot)
 ggsave("../figures/gnra.pdf",height = 1.6,width = 1.8)
 
-# Generate Figure 3c/3d heatmaps - Fixed to match original
+# Generate Figure 3c/3d heatmaps - using mean_editing_per_loop_variant with ORIGINAL layout
 figure_3c_upperpanel<-mean_editing_per_loop_variant %>%
     filter(boxb_7=="A"&boxb_13=="T",variable_subpos=="7_10",tada_type=="lambdaN",tada_conc=="250nM")%>%
     group_by(boxb_10_rc,boxb_8_rc)%>%
@@ -295,20 +305,20 @@ bottom_row <- plot_grid(
   ncol = 2
 )
 
-# Create the complete 2x2 grid layout like the original
+# Use ORIGINAL layout parameters
 plots3c_3d <- plot_grid(
   top_row, bottom_row,
   ncol = 1,
-  rel_heights = c(1, 1)  # Make both rows equal height
+  rel_heights = c(1, 0.5)  # ORIGINAL asymmetric layout
 )
 
 final_plot <- plot_grid(
   plots3c_3d, shared_legend,
-  rel_widths = c(1, 0.3)  # Adjust legend spacing
+  rel_widths = c(1, 0.25)  # ORIGINAL legend spacing
 )
 
 print(final_plot)
-ggsave("../figures/figure_3c_3d.pdf", height=3.2, width=5)  # Increase size to accommodate 2x2 layout
+ggsave("../figures/figure_3c_3d.pdf", height=1.6, width=2.5)  # ORIGINAL dimensions
 
 # Generate Figure 3i/3j (stem stability)
 figure_3j <- mean_editing_per_stem_variant %>%   
