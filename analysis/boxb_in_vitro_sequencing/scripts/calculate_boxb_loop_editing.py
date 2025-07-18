@@ -7,10 +7,26 @@ in specific loop regions, tracking UMI counts and nucleotide compositions.
 """
 
 import pandas as pd
+import re
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
 from collections import defaultdict
 import itertools as it
 import sys
+
+
+def extract_insert_sequence(target, oligo_name, variable_start, variable_length, read_sequence):
+    """Extract insert sequence based on oligo type."""
+    target_5_var_positions = [8, 10, 11, 14, 16]
+    target_3_var_positions = [0, 3, 5, 6, 8]
+    
+    if "boxb_random" in oligo_name:
+        return read_sequence[variable_start:variable_start + variable_length]
+    elif "target_random_5" in oligo_name:
+        return ''.join(target[pos] for pos in target_5_var_positions)
+    elif "target_random_3" in oligo_name:
+        return ''.join(target[pos] for pos in target_3_var_positions)
+    else:
+        raise ValueError(f"Unknown oligo type: {oligo_name}")
 
 
 def initialize_count_dict(sequence_length):
@@ -44,12 +60,29 @@ def main():
     SPACER5_BOXB_START = 12
     BOXB_LENGTH = 19
     BOXB_LOOP_POSITIONS = [7, 9, 10]
+    TARGET_EDIT_POSITIONS = [1, 2, 4, 7, 9, 12, 13, 15]
+    TARGET_SEQUENCE = 'ATTATGGTGTAATTCTA'
+    PRIMER_SEQUENCE = "AGCACAACA"
     NUCLEOTIDES = ['A', 'G', 'T', 'C', 'N']
     SEQUENCE_LENGTH = len(BOXB_LOOP_POSITIONS)
     
     # Load barcode annotations
     annotations = pd.read_csv(annotations_file).set_index('reverse_complement')
     annotations_barcode = annotations.loc[barcode]
+    
+    # Extract sequence validation parameters
+    proper_upstream = annotations_barcode['upstream_seq']
+    proper_downstream = annotations_barcode['downstream_seq']
+    if pd.isna(proper_downstream):
+        proper_downstream = ""
+    
+    # Pre-calculate extraction bounds
+    target_start = annotations_barcode['target_start']
+    target_length = annotations_barcode['target_length']
+    target_end = target_start + target_length
+    upstream_start = target_start - 10
+    downstream_start = target_start + 17
+    downstream_end = downstream_start + 10
     
     # Determine BoxB extraction parameters
     is_spacer3 = annotations_barcode['oligo_name'].startswith("spacer3")
@@ -66,22 +99,53 @@ def main():
         R2_file = FastqGeneralIterator(f2)
         
         for read1, read2 in zip(R1_file, R2_file):
-            # Extract UMI and BoxB sequence
-            umi = read2[1][UMI_START:UMI_START + UMI_LENGTH]
-            boxb = read1[1][boxb_start:boxb_end]
+            read_sequence = read1[1]
             
-            # Extract edited sequence from specific positions
-            boxb_edited_sequence = ''.join(boxb[pos] for pos in BOXB_LOOP_POSITIONS)
-            
-            # Skip if UMI already seen for this sequence
-            if umi in umi_sets[boxb_edited_sequence]:
+            # Skip reads containing primer sequence
+            if PRIMER_SEQUENCE in read_sequence:
                 continue
             
-            umi_sets[boxb_edited_sequence].add(umi)
-            count_dict = count_table[boxb_edited_sequence]
+            # Extract sequences for validation
+            target = read_sequence[target_start:target_end]
+            upstream_seq = read_sequence[upstream_start:target_start]
+            downstream_seq = read_sequence[downstream_start:downstream_end]
+            
+            # Validate sequence structure
+            upstream_match = re.fullmatch(proper_upstream, upstream_seq)
+            downstream_match = (downstream_seq == '' and proper_downstream == '') or \
+                             re.fullmatch(proper_downstream, downstream_seq)
+            
+            if not (upstream_match and downstream_match):
+                continue
+            
+            # Extract UMI and insert sequence
+            umi = read2[1][UMI_START:UMI_START + UMI_LENGTH]
+            
+            try:
+                insert = extract_insert_sequence(
+                    target, 
+                    annotations_barcode['oligo_name'],
+                    annotations_barcode['variable_start'],
+                    annotations_barcode['variable_length'],
+                    read_sequence
+                )
+            except ValueError as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            
+            # Skip if UMI already seen for this insert
+            if umi in umi_sets[insert]:
+                continue
+            
+            umi_sets[insert].add(umi)
+            count_dict = count_table[insert]
             count_dict['umi_counts'] += 1
             
-            # Count nucleotides by frequency and position in single pass
+            # Extract BoxB sequence and loop positions
+            boxb = read_sequence[boxb_start:boxb_end]
+            boxb_edited_sequence = ''.join(boxb[pos] for pos in BOXB_LOOP_POSITIONS)
+            
+            # Count nucleotides by frequency and position in boxb loop
             for nt in NUCLEOTIDES:
                 count = boxb_edited_sequence.count(nt)
                 count_dict[f"num_{count}_{nt}"] += 1
@@ -91,7 +155,7 @@ def main():
     
     # Convert to DataFrame and save
     count_table_df = pd.DataFrame.from_dict(dict(count_table), orient='index')
-    count_table_df.to_csv(output_file, index_label='boxb_edited_sequence')
+    count_table_df.to_csv(output_file, index_label='insert')
 
 
 if __name__ == "__main__":
