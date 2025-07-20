@@ -1,113 +1,78 @@
-#!/usr/bin/env Rscript
-
-# Module 1: Data Preparation
-# Load and merge all raw data files, create standardized data frames
-
-options(warn = -1)
+# Data Preparation Script
+# Loads raw data, joins with annotations, and outputs processed CSV files
 
 suppressPackageStartupMessages({
-  library(plyranges)
   library(tidyverse)
-  library(rasilabRtemplates)
-  library(ggpubr)
-  library(RColorBrewer)
-  library(Biostrings)
-  library(cowplot)
+  library(janitor)
 })
 
-cat("Loading data files...\n")
-
-# Define constants
+# Constants
 wildtype_boxb <- "GGGCCCTGAAGAAGGGCCC"
 wildtype_boxb_rc <- "GGGCCCTTCTTCAGGGCCC"
-time_order=c("37_30min","37_1hr","37_2hr")
-position_order=c("5","3")
+time_order <- c("37_30min", "37_1hr", "37_2hr")
+position_order <- c("5", "3")
 
-# Load summary stats data
-target_data <- list.files("../data/summary_stats_combined/", full.names = T, pattern = ".csv.gz") %>%
-    read_csv(show_col_types = F) %>%
-    janitor::clean_names()
+# Read raw data
+target_data <- list.files("../data/summary_stats_combined/", 
+                         full.names = TRUE, 
+                         pattern = ".csv.gz") %>%
+  read_csv(show_col_types = FALSE) %>%
+  clean_names()
 
-cat("Loaded", nrow(target_data), "rows from summary_stats_combined\n")
+boxb_loop_data <- list.files("../data/boxb_stats_combined/", 
+                            full.names = TRUE, 
+                            pattern = ".csv.gz") %>%
+  read_csv(show_col_types = FALSE) %>%
+  clean_names()
 
-# Load boxb stats data  
-boxb_loop_data <- list.files("../data/boxb_stats_combined/", full.names = T, pattern = ".csv.gz") %>%
-    as_tibble_col("file") %>%
-    mutate(data = map(file, . %>% read_csv() %>% as_tibble %>% select(-sample_id))) %>%
-    mutate(sample_id = str_extract(file, "(?<=data/boxb_stats_combined//)[:graph:]+(?=.csv.gz$)")) %>%
-    janitor::clean_names() %>%
-    unnest("data")
+# Read annotations
+barcode_annotations <- read_csv("../annotations/barcode_annotations.csv", 
+                               show_col_types = FALSE) %>%
+  select(-barcode) %>%
+  rename(barcode = reverse_complement)
 
-cat("Loaded", nrow(boxb_loop_data), "rows from boxb_stats_combined\n")
+sample_annotations <- read_csv("../annotations/sample_info.csv", 
+                              show_col_types = FALSE)
 
-# Load annotations
-barcode_annotations <- read_csv("../annotations/barcode_annotations.csv", show_col_types = F) %>%
-    select(-barcode) %>%
-    rename(barcode = reverse_complement)
+hairpin_annotations <- read_tsv("../annotations/hairpin_annotations.tsv", 
+                               show_col_types = FALSE) %>%
+  rename("insert" = "variable_region")
 
-sample_annotations <- read_csv("../annotations/sample_info.csv", show_col_types = F)
-
-hairpin_annotations <- read_tsv("../annotations/hairpin_annotations.tsv", show_col_types = F) %>%
-    rename("insert" = "variable_region")
-
-cat("Loaded annotation files\n")
-
-# Merge data with annotations
+# Join data with annotations
 target_data <- target_data %>%
-    left_join(barcode_annotations, by = "barcode") %>%
-    left_join(sample_annotations, by = "sample_id")
+  left_join(barcode_annotations, by = "barcode") %>%
+  left_join(sample_annotations, by = "sample_id")
 
 loop_data <- boxb_loop_data %>%
-    left_join(barcode_annotations, by = "barcode") %>%
-    left_join(sample_annotations, by = "sample_id")
+  left_join(barcode_annotations, by = "barcode") %>%
+  left_join(sample_annotations, by = "sample_id")
 
-cat("Merged annotations with data\n")
+# Create boxB WT/MUT stems definition
+boxb_wt_mut_stems <- list(
+  wt = c("1_3" = "CCC", "4_6" = "GGG", "14_16" = "CCC", "17_19" = "GGG"),
+  mut = c("1_3" = "GGG", "4_6" = "CCC", "14_16" = "GGG", "17_19" = "CCC")
+) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("variable_subpos") %>%
+  pivot_longer(cols = c("wt", "mut"), 
+               names_to = "insert_type", 
+               values_to = "insert")
 
-# Define wildtype inserts
-wildtype_boxb_random_inserts <- barcode_annotations  %>%
-  filter(str_detect(oligo_name, "boxb_random")) %>%
-  distinct(variable_subpos)  %>%
-  separate(variable_subpos, c("start", "end"), remove = F) %>%
-  mutate(wt_insert = c("CCC","GGG","TTCA","TTCT","CCC","GGG")) %>%
-  select(variable_subpos, wt_insert)
-
-wildtype_target_random_inserts <- barcode_annotations  %>%
-  filter(str_detect(oligo_name, "target_random")) %>%
-  distinct(variable_subpos)  %>%
-  mutate(wt_insert = c("GAACA","AAGGG"))
-
-# Create output directory if it doesn't exist
+# Save processed data
 dir.create("../tables", showWarnings = FALSE, recursive = TRUE)
 
-# Save processed data to CSV files
-cat("Saving processed data to ../tables/\n")
-
-write_csv(target_data, "../tables/target_data.csv")
-write_csv(loop_data, "../tables/loop_data.csv") 
+write_csv(target_data, "../tables/target_data_processed.csv")
+write_csv(loop_data, "../tables/loop_data_processed.csv")
+write_csv(boxb_wt_mut_stems, "../tables/boxb_wt_mut_stems.csv")
 write_csv(hairpin_annotations, "../tables/hairpin_annotations.csv")
 
-# Also save wildtype definitions for use by other modules
-wildtype_defs <- list(
-  wildtype_boxb = wildtype_boxb,
-  wildtype_boxb_rc = wildtype_boxb_rc,
-  time_order = time_order,
-  position_order = position_order
-)
-
-# Save as a simple CSV for constants
+# Save constants
 constants_df <- data.frame(
-  variable = c("wildtype_boxb", "wildtype_boxb_rc"),
-  value = c(wildtype_boxb, wildtype_boxb_rc)
+  variable = c("wildtype_boxb", "wildtype_boxb_rc", "time_order", "position_order"),
+  value = c(wildtype_boxb, wildtype_boxb_rc, 
+           paste(time_order, collapse = ","), 
+           paste(position_order, collapse = ","))
 )
-write_csv(constants_df, "../tables/constants.csv")
-write_csv(wildtype_boxb_random_inserts, "../tables/wildtype_boxb_random_inserts.csv")
-write_csv(wildtype_target_random_inserts, "../tables/wildtype_target_random_inserts.csv")
+write_csv(constants_df, "../tables/constants_processed.csv")
 
-cat("Data preparation completed successfully!\n")
-cat("Output files:\n")
-cat("  - ../tables/target_data.csv (", nrow(target_data), " rows)\n")
-cat("  - ../tables/loop_data.csv (", nrow(loop_data), " rows)\n") 
-cat("  - ../tables/hairpin_annotations.csv (", nrow(hairpin_annotations), " rows)\n")
-cat("  - ../tables/constants.csv\n")
-cat("  - ../tables/wildtype_boxb_random_inserts.csv\n")
-cat("  - ../tables/wildtype_target_random_inserts.csv\n")
+cat("Data preparation complete!\n")

@@ -1,35 +1,212 @@
-#!/usr/bin/env Rscript
-
-options(warn = -1)
+# Generate Figure 2 Panels
+# Reads processed data and generates all Figure 2 panels
 
 suppressPackageStartupMessages({
-  library(plyranges)
   library(tidyverse)
-  library(rasilabRtemplates)
   library(ggpubr)
-  library(RColorBrewer)
-  library(Biostrings)
   library(cowplot)
 })
 
-target_data <- list.files("../data/summary_stats_combined/", full.names = T, pattern = ".csv.gz") %>%
-    read_csv(show_col_types = F) %>%
-    janitor::clean_names() %>%
-    print()
+# Read processed data
+target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
+loop_data <- read_csv("../tables/loop_data_processed.csv", show_col_types = FALSE)
+boxb_wt_mut_stems <- read_csv("../tables/boxb_wt_mut_stems.csv", show_col_types = FALSE)
 
-boxb_loop_data <- list.files("../data/boxb_stats_combined/", full.names = T, pattern = ".csv.gz") %>%
-    read_csv(show_col_types = F) %>%
-    janitor::clean_names() %>%
-    print()
+# Read constants
+constants_df <- read_csv("../tables/constants_processed.csv", show_col_types = FALSE)
+time_order <- str_split(constants_df$value[constants_df$variable == "time_order"], ",")[[1]]
 
-barcode_annotations <- read_csv("../annotations/barcode_annotations.csv", show_col_types = F) %>%
-    select(-barcode) %>%
-    rename(barcode = reverse_complement) %>%
-    print()
+# Common theme for all plots
+theme_figure <- theme_classic() +
+  theme(
+    axis.text = element_text(size = 5, color = "black"),
+    axis.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 5, color = "black"),
+    strip.text = element_text(size = 6, color = "black"),
+    panel.spacing = unit(0.2, "lines"),
+    legend.position = "right",
+    legend.key.size = unit(0.3, "cm"),
+    axis.line = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks.length = unit(0.05, "cm"),
+    strip.background = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    plot.background = element_rect(fill = "white"),
+    plot.margin = margin(2, 2, 2, 2, "mm")
+  )
 
-sample_annotations <- read_csv("../annotations/sample_info.csv", show_col_types = F) %>%
-    print()
+# Common colors
+bar_colors <- c("frac_1edit_mut" = "#cccccc", "frac_1edit_wt" = "#a6dbe5",
+                "frac_2edit_mut" = "#888888", "frac_2edit_wt" = "#337ab7")
 
-hairpin_annotations <- read_tsv("../annotations/hairpin_annotations.tsv", show_col_types = F) %>%
-    rename("insert" = "variable_region") %>%
-    print()
+# Define cbPalette for concentration plots
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# Figure 2B: Recorder Region - Concentration Analysis
+mean_editing_per_concentration <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
+  summarize(mean = 100 * mean(fraction_edited), 
+            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
+
+# Calculate fold change and statistical tests
+fold_change_df <- mean_editing_per_concentration %>%
+  select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
+  pivot_wider(names_from = insert_type, values_from = mean) %>%
+  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
+         y.position = pmax(wt, mut) + 6)
+
+stat_data <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type) %>%
+  do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
+  ungroup() %>%
+  mutate(p_adj = p.adjust(p.value, method = "BH"),
+         significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
+                                 p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
+  left_join(mean_editing_per_concentration %>% 
+            group_by(tada_type, tada_conc, edit_type) %>% 
+            summarize(y.position = max(mean) + 3, .groups = "drop"), 
+            by = c("tada_type", "tada_conc", "edit_type")) %>%
+  mutate(group1 = "mut", group2 = "wt", label = significance)
+
+# Plot concentration analysis
+p_concentration <- mean_editing_per_concentration %>%
+  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+            fill = paste(edit_type, insert_type, sep = "_"))) +
+  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  facet_grid(tada_conc ~ tada_type, scales = "free_y",
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+  scale_fill_manual(values = bar_colors,
+                    labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
+                              "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
+                    name = NULL) +
+  labs(x = NULL, y = "Edited (%)") +
+  theme_figure +
+  stat_pvalue_manual(data = stat_data %>% filter(significance != "ns"),
+                    x = "edit_type", y.position = "y.position", 
+                    tip.length = 0.01, size = 2, inherit.aes = FALSE) +
+  geom_text(data = fold_change_df, aes(x = edit_type, y = y.position, label = label),
+            inherit.aes = FALSE, size = 2.2)
+
+ggsave("../figures/fig2b_recorder.png", width = 3, height = 3, units = "in", dpi = 600)
+
+# Figure 2B: Time Course Analysis
+mean_editing_per_time <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("lambdaN"), tada_conc == "250nM") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, condition, edit_type, insert_type) %>%
+  summarize(mean = 100 * mean(fraction_edited), 
+            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
+
+p_time <- mean_editing_per_time %>%
+  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+            fill = paste(edit_type, insert_type, sep = "_"))) +
+  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  facet_grid(tada_type ~ fct_relevel(condition, time_order), scales = "free_y",
+            labeller = labeller(tada_type = c("lambdaN" = "λN-TadA"))) +
+  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+  scale_fill_manual(values = bar_colors, name = NULL) +
+  labs(x = NULL, y = "Edited (%)") +
+  theme_figure
+
+ggsave("../figures/fig2b_recorder_time.png", width = 6, height = 2, units = "in", dpi = 600)
+
+# Figure 2B: Loop Region Analysis
+mean_loop_editing_per_concentration <- loop_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, frac_2edit = (num_2_c + num_3_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
+  summarize(mean = 100 * mean(fraction_edited), 
+            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
+
+p_loop <- mean_loop_editing_per_concentration %>%
+  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+            fill = paste(edit_type, insert_type, sep = "_"))) +
+  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  facet_grid(tada_conc ~ tada_type, scales = "free_y",
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+  scale_fill_manual(values = bar_colors, name = NULL) +
+  labs(x = NULL, y = "Edited (%, loop)") +
+  theme_figure
+
+ggsave("../figures/fig2b_loop.png", width = 3, height = 3, units = "in", dpi = 600)
+
+# Loop Concentration Dependence
+p_loop_concentration <- mean_loop_editing_per_concentration %>%
+  group_by(tada_type, tada_conc, insert_type) %>%
+  summarize(mean_1plus = sum(mean), se_1plus = sqrt(sum(se^2)), .groups = "drop") %>%
+  mutate(tada_conc_numeric = as.numeric(str_extract(tada_conc, "\\d+\\.?\\d*"))) %>%
+  ggplot(aes(x = tada_conc_numeric, y = mean_1plus, color = tada_type, 
+             shape = insert_type, group = interaction(tada_type, insert_type))) +
+  geom_point(size = 1.5, stroke = 0.3) +
+  geom_line(linewidth = 0.4) +
+  geom_errorbar(aes(ymin = mean_1plus - se_1plus, ymax = mean_1plus + se_1plus), 
+                width = 0.02, linewidth = 0.3) +
+  scale_x_continuous(name = "TadA concentration (μM)", 
+                     breaks = c(0.1, 0.5, 2.5), labels = c("0.1", "0.5", "2.5"),
+                     trans = "log10") +
+  scale_color_manual(values = cbPalette,
+                     labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"), name = NULL) +
+  scale_shape_manual(values = c("wt" = 16, "mut" = 17),
+                     labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
+  labs(y = "Edited (%)") +
+  theme_figure
+
+ggsave("../figures/fig2b_loop_concentration.png", width = 2.5, height = 2, units = "in", dpi = 600)
+
+# Figure 2C: Distance Dependence
+plot_data <- target_data %>%
+  filter(variable_type == "target", tada_type == "tada_only", 
+         tada_conc == "250nM", condition == "37_2hr") %>%
+  mutate(fraction_2to4edit = (num_1_c + num_3_c + num_4_c) / umi_counts) %>%
+  select(target_dist, target_pos_to_boxb, fraction_2to4edit) %>%
+  group_by(target_pos_to_boxb, target_dist) %>%
+  summarize(mean = mean(fraction_2to4edit), se = sd(fraction_2to4edit) / sqrt(n()),
+            n = n(), .groups = "drop") %>%
+  mutate(absolute_dist = case_when(target_pos_to_boxb == "5" ~ 30 - target_dist,
+                                  target_pos_to_boxb == "3" ~ target_dist))
+
+p_distance <- plot_data %>%
+  ggplot(aes(x = absolute_dist, y = mean * 100, color = target_pos_to_boxb)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), width = 0.25) +
+  scale_y_continuous(limits = c(0, 60)) +
+  guides(color = "none") +
+  labs(x = "Recorder Position (nt)", y = "Percent Edited") +
+  theme_classic() +
+  theme(axis.title = element_text(size = 8), axis.text = element_text(size = 8),
+        axis.line = element_line(color = "grey"))
+
+ggsave("../figures/fig2c.png", height = 1.25, width = 4, dpi = 600)
+
+# Save summary data
+write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
+          "../tables/fig2b_recorder.csv")
+write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
+          "../tables/fig2b_loop.csv")
+write_csv(plot_data, "../tables/fig2c_plot_data.csv")
+
+cat("Figure 2 generation complete!\n")
