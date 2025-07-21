@@ -154,8 +154,8 @@ figure_3c_upper <- mean_editing_per_loop_variant %>%
     legend.position = "none"
   )
 
-# Figure 3C: Lower panel (positions 7 vs 13 for GNRA variants)
-figure_3c_lower <- mean_editing_per_loop_variant %>%
+# Figure 3E: Lower panel (positions 7 vs 13 for GNRA variants)
+figure_3e_lower <- mean_editing_per_loop_variant %>%
   filter(boxb_8 == "C" & boxb_9 == "T" & boxb_10 %in% c("T", "C"), 
          variable_subpos == "7_10", tada_type == "lambdaN", tada_conc == "250nM") %>%
   group_by(boxb_7_rc, boxb_13_rc) %>%
@@ -194,8 +194,8 @@ figure_3d_upper <- mean_editing_per_loop_variant %>%
     legend.position = "none"
   )
 
-# Figure 3D: Lower panel (positions 7 vs 13 for GNRA variants)
-figure_3d_lower <- mean_editing_per_loop_variant %>%
+# Figure 3F: Lower panel (positions 7 vs 13 for GNRA variants)
+figure_3f_lower <- mean_editing_per_loop_variant %>%
   filter(boxb_10 %in% c("T", "C"), boxb_12 == "T", variable_subpos == "10_13", 
          tada_type == "lambdaN", tada_conc == "250nM") %>%
   group_by(boxb_7_rc, boxb_13_rc) %>%
@@ -219,14 +219,14 @@ shared_legend <- get_legend(
 
 # Combine heatmaps
 top_row <- plot_grid(figure_3c_upper, figure_3d_upper, ncol = 2)
-bottom_row <- plot_grid(figure_3c_lower, figure_3d_lower, ncol = 2)
+bottom_row <- plot_grid(figure_3e_lower, figure_3f_lower, ncol = 2)
 
 plots_3c_3d <- plot_grid(top_row, bottom_row, ncol = 1, rel_heights = c(1, 0.5))
 figure_3c_3f <- plot_grid(plots_3c_3d, shared_legend, rel_widths = c(1, 0.25))
 
 ggsave("../figures/fig3c_3f.pdf", figure_3c_3f, height = 1.6, width = 2.5, units = "in")
 
-# Figure 3G-3H: Stem Stability Analysis
+# Figure 3I-3J: Stem Stability Analysis
 mean_editing_per_stem_variant <- target_data %>%
   filter(variable_type == "boxb", 
          sample_id %in% c("i79_p3", "i79_p5", "i79_p6", "i79_p10", "i79_p20", "i79_p2", "i79_p4", "i79_p8", "i79_p7")) %>%
@@ -243,16 +243,16 @@ mean_editing_per_stem_variant <- target_data %>%
             energy_bins = first(energy_bins),
             .groups = "drop")
 
-# Figure 3G: Free energy distribution
-figure_3g <- mean_editing_per_stem_variant %>%
+# Figure 3I: Free energy distribution
+figure_3i <- mean_editing_per_stem_variant %>%
   filter(condition == "37_2hr", tada_type == "lambdaN") %>%
   ggplot(aes(x = free_energy)) +
   geom_histogram(fill = "gray70", color = "white", bins = 30) +
   labs(x = "G (kJ/mol, RNAFold)", y = "# BoxB Variants") +
   theme_figure
 
-# Figure 3H: Energy bins vs editing
-figure_3h <- mean_editing_per_stem_variant %>%
+# Figure 3J: Energy bins vs editing
+figure_3j <- mean_editing_per_stem_variant %>%
   filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
   ggplot(aes(x = as_factor(energy_bins), y = mean_fraction_edited * 100, 
              fill = factor(condition, levels = time_order))) +
@@ -276,9 +276,9 @@ figure_3h <- mean_editing_per_stem_variant %>%
   )
 
 # Combine stem analysis figures
-figure_3g_3h <- plot_grid(figure_3g, figure_3h, ncol = 1, rel_heights = c(1.25, 2))
+figure_3i_3j <- plot_grid(figure_3i, figure_3j, ncol = 1, rel_heights = c(1.25, 2))
 
-ggsave("../figures/fig3g_3h.pdf", figure_3g_3h, height = 3.25, width = 2.25, units = "in")
+ggsave("../figures/fig3i_3j.pdf", figure_3i_3j, height = 3.25, width = 2.25, units = "in")
 
 # Save summary data
 write_csv(editing_per_loop_variant %>% 
@@ -298,6 +298,6 @@ write_csv(mean_editing_per_stem_variant %>%
           mutate(mean_fraction_edited = signif(mean_fraction_edited, 2),
                  free_energy = signif(free_energy, 2)) %>%
           select(condition, variable_subpos, insert, energy_bins, free_energy, mean_fraction_edited), 
-          "../tables/fig3g_3h_plot_data.csv")
+          "../tables/fig3i_3j_plot_data.csv")
 
 cat("Figure 3 generation complete!\n")
