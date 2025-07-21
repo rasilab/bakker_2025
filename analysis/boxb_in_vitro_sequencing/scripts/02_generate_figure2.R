@@ -276,7 +276,7 @@ p_position_context <- individual_a_editing_context_constant %>%
   geom_point(size = 1.5) +
   geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), 
                 width = 0.25, linewidth = 0.3) +
-  facet_wrap(~ tada_type, ncol = 2, 
+  facet_wrap(~ tada_type, ncol = 1, scales = "free_x", 
              labeller = labeller(tada_type = c("lambdaN" = "λN-TadA", "tada_only" = "TadA"))) +
   scale_x_discrete(labels = position_labs) +
   scale_y_continuous() +
@@ -286,7 +286,7 @@ p_position_context <- individual_a_editing_context_constant %>%
   theme_figure +
   theme(axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2d.png", width = 3, height = 2, units = "in", dpi = 600)
+ggsave("../figures/fig2d.png", width = 3, height = 4, units = "in", dpi = 600)
 
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
