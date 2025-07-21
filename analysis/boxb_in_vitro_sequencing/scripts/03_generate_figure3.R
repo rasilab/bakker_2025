@@ -1,375 +1,303 @@
-#!/usr/bin/env Rscript
-
-# Module 3: Figure 3 Generation (BoxB Variants) - FIXED TO MATCH ORIGINAL
-# Generate Figure 3 panels analyzing BoxB loop and stem variants
-
-options(warn = -1)
+# Generate Figure 3 Panels
+# Reads processed data and generates all Figure 3 panels
 
 suppressPackageStartupMessages({
-  library(plyranges)
   library(tidyverse)
-  library(rasilabRtemplates)
   library(ggpubr)
-  library(RColorBrewer)
-  library(Biostrings)
   library(cowplot)
 })
 
-cat("Loading processed data for Figure 3...\n")
-
-# Load processed data
-target_data <- read_csv("../tables/target_data.csv", show_col_types = FALSE)
+# Read processed data
+target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
 hairpin_annotations <- read_csv("../tables/hairpin_annotations.csv", show_col_types = FALSE)
 
-cat("Data loaded successfully\n")
+# Read constants
+constants_df <- read_csv("../tables/constants_processed.csv", show_col_types = FALSE)
+time_order <- str_split(constants_df$value[constants_df$variable == "time_order"], ",")[[1]]
 
-# Define constants
+# Common theme for all plots
+theme_figure <- theme_classic() +
+  theme(
+    axis.text = element_text(size = 5, color = "black"),
+    axis.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 5, color = "black"),
+    strip.text = element_text(size = 6, color = "black"),
+    panel.spacing = unit(0.2, "lines"),
+    legend.position = "right",
+    legend.key.size = unit(0.3, "cm"),
+    axis.line = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks.length = unit(0.05, "cm"),
+    strip.background = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    plot.background = element_rect(fill = "white"),
+    plot.margin = margin(2, 2, 2, 2, "mm")
+  )
+
+# Common colors
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-# Create output directories  
-dir.create("../figures", showWarnings = FALSE, recursive = TRUE)
-dir.create("../tables", showWarnings = FALSE, recursive = TRUE)
+# Figure 3B: GNRA Analysis
+editing_per_loop_variant <- target_data %>%
+  filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p4", "i79_p8")) %>%
+  filter(umi_counts > 200) %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = 1 - fraction_num_0_c) %>%
+  select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
 
-cat("Calculating BoxB variant statistics...\n")
+# Process loop data for 7_10 region
+loop_data_tmp <- editing_per_loop_variant %>%
+  filter(variable_subpos == "7_10") %>%
+  mutate(boxb_7 = str_sub(insert, 4, 4),
+         boxb_8 = str_sub(insert, 3, 3),
+         boxb_9 = str_sub(insert, 2, 2),
+         boxb_10 = str_sub(insert, 1, 1),
+         boxb_11 = "C",
+         boxb_12 = "T",
+         boxb_13 = "T")
 
-# FIRST: Create stats_per_boxb_insert for GNRA plot (editing_per_loop_variant)
-# Using EXACT parameters from original script
-stats_per_boxb_insert <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p3","i79_p4","i79_p8")) %>%
-    filter(umi_counts>200)%>%
-    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-        fraction_edited=1-fraction_num_0_c)%>%
-    select(tada_type,tada_conc,variable_subpos,insert, fraction_edited) %>%
-    group_by(tada_type,variable_subpos,insert)%>%  # Note: NO tada_conc in grouping (original logic)
-    left_join(hairpin_annotations,by=c("variable_subpos","insert"))
+# Process loop data for 10_13 region and combine
+editing_per_loop_variant <- editing_per_loop_variant %>%
+  filter(variable_subpos == "10_13") %>%
+  mutate(boxb_7 = "A",
+         boxb_8 = "C",
+         boxb_9 = "T",
+         boxb_10 = str_sub(insert, 4, 4),
+         boxb_11 = str_sub(insert, 3, 3),
+         boxb_12 = str_sub(insert, 2, 2),
+         boxb_13 = str_sub(insert, 1, 1)) %>%
+  bind_rows(loop_data_tmp) %>%
+  mutate(gnra = boxb_8 == "C" & (boxb_10 == "T" | boxb_10 == "C") & boxb_12 == "T") %>%
+  filter(boxb_7 == "A" & boxb_13 == "T")
 
-loop_data_tmp <- stats_per_boxb_insert %>%
-    filter(variable_subpos %in% c("7_10"))%>%
-    mutate(boxb_7=str_sub(insert,4,4),
-        boxb_8=str_sub(insert,3,3),
-        boxb_9=str_sub(insert,2,2),
-        boxb_10=str_sub(insert,1,1),
-        boxb_11="C",
-        boxb_12="T",
-        boxb_13="T")
+figure_3b <- editing_per_loop_variant %>%
+  filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
+  ggplot(aes(x = gnra, y = fraction_edited * 100, fill = gnra)) +
+  geom_point(color = "grey50") +
+  geom_violin(alpha = 0.3) +
+  geom_boxplot(width = 0.2, fill = "white", alpha = 0.3, color = "black", outlier.shape = NA) +
+  scale_fill_manual(values = cbPalette, guide = "none") +
+  scale_x_discrete(labels = c("Not GNRNA", "GNRNA")) +
+  scale_y_continuous(limits = c(0, 35)) +
+  labs(x = "BoxB Loop Sequence", y = "% Edited RNA") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format",
+    comparisons = list(c("TRUE", "FALSE")),
+    label.y = 32,
+    size = 2
+  ) +
+  theme_figure
 
-editing_per_loop_variant <- stats_per_boxb_insert %>%
-    filter(variable_subpos %in% c("10_13"))%>%
-    mutate(boxb_7="A",
-        boxb_8="C",
-        boxb_9="T",
-        boxb_10=str_sub(insert,4,4),
-        boxb_11=str_sub(insert,3,3),
-        boxb_12=str_sub(insert,2,2),
-        boxb_13=str_sub(insert,1,1))%>%
-    bind_rows(loop_data_tmp)%>%
-    mutate(gnra=boxb_8=="C"&(boxb_10=="T"|boxb_10=="C")&boxb_12=="T",
-        boxb_8_rc=case_when(
-        boxb_8=="A" ~ "T",
-        boxb_8=="C" ~ "G",
-        boxb_8=="G" ~ "C",
-        boxb_8=="T" ~ "A"
-        ), boxb_10_rc=case_when(
-        boxb_10=="A" ~ "T",
-        boxb_10=="C" ~ "G",
-        boxb_10=="G" ~ "C",
-        boxb_10=="T" ~ "A"
-        ), boxb_12_rc=case_when(
-        boxb_12=="A" ~ "T",
-        boxb_12=="C" ~ "G",
-        boxb_12=="G" ~ "C",
-        boxb_12=="T" ~ "A"
-        ))%>%
-        filter(boxb_7=="A"&boxb_13=="T")
+ggsave("../figures/fig3b.pdf", figure_3b, height = 1.6, width = 1.8, units = "in")
 
-write_tsv(editing_per_loop_variant,"../tables/editing_per_loop_variant.tsv")
+# Figure 3C-3F: Loop Variant Heatmaps
+mean_editing_per_loop_variant <- target_data %>%
+  filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p2", "i79_p8")) %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = 1 - fraction_num_0_c) %>%
+  select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
+  group_by(tada_type, tada_conc, variable_subpos, insert) %>%
+  summarize(mean_fraction_edited = mean(fraction_edited),
+            se_fraction_edited = sd(fraction_edited) / sqrt(n()),
+            .groups = "drop") %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
 
-# SECOND: Create stats_per_boxb_insert for heatmaps (mean_editing_per_loop_variant) 
-# Using EXACT parameters from original script
-stats_per_boxb_insert <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p2","i79_p8","i79_p10","i79_p20")) %>%
-    # NO umi_counts filter for heatmaps (original behavior)
-    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-        fraction_edited=1-fraction_num_0_c)%>%
-    select(tada_type,tada_conc,variable_subpos,insert, fraction_edited) %>%
-    group_by(tada_type,tada_conc,variable_subpos,insert)%>%  # Note: INCLUDES tada_conc in grouping (original logic)
-    summarize(across(matches("fraction_"),~mean(.x),.names="mean_{col}"),
-    across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
-    .groups = "drop")%>%
-    left_join(hairpin_annotations,by=c("variable_subpos","insert"))
+# Process loop data for heatmaps
+loop_data_heatmap <- mean_editing_per_loop_variant %>%
+  filter(variable_subpos == "7_10") %>%
+  mutate(boxb_7 = str_sub(insert, 4, 4),
+         boxb_8 = str_sub(insert, 3, 3),
+         boxb_9 = str_sub(insert, 2, 2),
+         boxb_10 = str_sub(insert, 1, 1),
+         boxb_11 = "C",
+         boxb_12 = "T",
+         boxb_13 = "T")
 
-loop_data_tmp <- stats_per_boxb_insert %>%
-    filter(variable_subpos %in% c("7_10"))%>%
-    mutate(boxb_7=str_sub(insert,4,4),
-        boxb_8=str_sub(insert,3,3),
-        boxb_9=str_sub(insert,2,2),
-        boxb_10=str_sub(insert,1,1),
-        boxb_11="C",
-        boxb_12="T",
-        boxb_13="T")
+mean_editing_per_loop_variant <- mean_editing_per_loop_variant %>%
+  filter(variable_subpos == "10_13") %>%
+  mutate(boxb_7 = "A",
+         boxb_8 = "C",
+         boxb_9 = "T",
+         boxb_10 = str_sub(insert, 4, 4),
+         boxb_11 = str_sub(insert, 3, 3),
+         boxb_12 = str_sub(insert, 2, 2),
+         boxb_13 = str_sub(insert, 1, 1)) %>%
+  bind_rows(loop_data_heatmap) %>%
+  mutate(across(c(boxb_7, boxb_8, boxb_9, boxb_10, boxb_11, boxb_12, boxb_13), ~ case_when(
+    .x == "A" ~ "T",
+    .x == "C" ~ "G", 
+    .x == "G" ~ "C",
+    .x == "T" ~ "A"
+  ), .names = "{col}_rc"))
 
-mean_editing_per_loop_variant <- stats_per_boxb_insert %>%
-    filter(variable_subpos %in% c("10_13"))%>%
-    mutate(boxb_7="A",
-        boxb_8="C",
-        boxb_9="T",
-        boxb_10=str_sub(insert,4,4),
-        boxb_11=str_sub(insert,3,3),
-        boxb_12=str_sub(insert,2,2),
-        boxb_13=str_sub(insert,1,1))%>%
-    bind_rows(loop_data_tmp)%>%
-    mutate(gnra=boxb_8=="C"&(boxb_10=="T"|boxb_10=="C")&boxb_12=="T",
-        boxb_8_rc=case_when(
-        boxb_8=="A" ~ "T",
-        boxb_8=="C" ~ "G",
-        boxb_8=="G" ~ "C",
-        boxb_8=="T" ~ "A"
-        ), boxb_10_rc=case_when(
-        boxb_10=="A" ~ "T",
-        boxb_10=="C" ~ "G",
-        boxb_10=="G" ~ "C",
-        boxb_10=="T" ~ "A"
-        ), boxb_12_rc=case_when(
-        boxb_12=="A" ~ "T",
-        boxb_12=="C" ~ "G",
-        boxb_12=="G" ~ "C",
-        boxb_12=="T" ~ "A"
-        ), boxb_7_rc=case_when(
-        boxb_7=="A" ~ "T",
-        boxb_7=="C" ~ "G",
-        boxb_7=="G" ~ "C",
-        boxb_7=="T" ~ "A"
-        ), boxb_13_rc=case_when(
-        boxb_13=="A" ~ "T",
-        boxb_13=="C" ~ "G",
-        boxb_13=="G" ~ "C",
-        boxb_13=="T" ~ "A"
-        ))
-
-write_tsv(mean_editing_per_loop_variant,"../tables/mean_editing_per_loop_variant.tsv")
-
-# Calculate stem variant stats - EXACT parameters from original
-mean_editing_per_stem_variant <- target_data %>%
-    filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p5","i79_p6","i79_p10","i79_p20","i79_p2","i79_p4","i79_p8","i79_p7")) %>%
-    filter(variable_subpos %in% c("1_3","4_6","14_16","17_19")) %>%
-    # NO umi_counts filter (original behavior)
-    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-        fraction_edited=1-fraction_num_0_c)%>%
-    select(tada_type,tada_conc,condition,variable_subpos,insert, fraction_edited) %>%
-    left_join(hairpin_annotations,by=c("variable_subpos","insert"))%>%
-    filter(!is.na(free_energy))%>%
-    mutate(energy_bins = ntile(free_energy, 5))%>%
-    group_by(tada_type,tada_conc,condition,variable_subpos,insert)%>%
-    summarize(mean_fraction_edited=mean(fraction_edited,na.rm=T),
-        free_energy=first(free_energy),
-        energy_bins=first(energy_bins),
-        .groups="drop")
-
-write_tsv(mean_editing_per_stem_variant,"../tables/mean_editing_per_stem_variant.tsv")
-
-cat("Generating Figure 3 plots...\n")
-
-# Generate GNRA plot - using editing_per_loop_variant
-gnra_plot <- editing_per_loop_variant %>%
-    filter(tada_type=="lambdaN",tada_conc=="250nM")%>%
-    ggplot(aes(x=gnra,y=fraction_edited*100,fill=gnra))+
-        geom_point(color="grey50")+
-        geom_point(data=editing_per_loop_variant%>%filter(gnra=="FALSE",boxb_7=="A"&boxb_13=="T",fraction_edited>.25,tada_type=="lambdaN",tada_conc=="250nM"),color="black")+
-        geom_point(data=editing_per_loop_variant%>%filter(gnra=="TRUE",boxb_7=="A"&boxb_13=="T",fraction_edited>.30,tada_type=="lambdaN",tada_conc=="250nM"),color="black")+
-        geom_point(data=editing_per_loop_variant%>%filter(gnra=="TRUE",boxb_7=="A"&boxb_13=="T",fraction_edited<.10,tada_type=="lambdaN",tada_conc=="250nM"),color="black")+
-        geom_violin(alpha=0.3)+
-        geom_boxplot(width = 0.2, fill = "white", alpha=0.3, color = "black", outlier.shape = NA) +
-        theme_classic()+
-        scale_fill_manual(values=cbPalette,guide="none")+
-        labs(x = "boxB Loop Sequence", y = "Mean Percent Edited")+
-        scale_x_discrete(labels=c("Not GNRNA","GNRNA"))+
-        scale_y_continuous(limits=c(0,35))+
-        stat_compare_means(
-            method = "wilcox.test",      
-            label = "p.format",           
-            comparisons = list(c("TRUE", "FALSE")),
-            label.y = 32,
-            size=3)+
-        theme(
-            axis.title = element_text(size = 8),
-            axis.text = element_text(size = 8),
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 8),
-            axis.line = element_line(color = "grey")
-        )
-
-print(gnra_plot)
-ggsave("../figures/gnra.pdf",height = 1.6,width = 1.8)
-
-# Generate Figure 3c/3d heatmaps - using mean_editing_per_loop_variant with ORIGINAL layout
-figure_3c_upperpanel<-mean_editing_per_loop_variant %>%
-    filter(boxb_7=="A"&boxb_13=="T",variable_subpos=="7_10",tada_type=="lambdaN",tada_conc=="250nM")%>%
-    group_by(boxb_10_rc,boxb_8_rc)%>%
-    summarize(mean_percent=mean(mean_fraction_edited)*100, .groups="drop")%>%
-    ggplot(aes(x=boxb_10_rc,y=boxb_8_rc,fill=mean_percent))+
-        geom_tile()+
-        scale_fill_gradient(
-            name="Percent\nEdited",
-            low = "white", high = "black",
-            limits = c(10, 30),
-            guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"), na.value = "red")+
-        theme(
-        axis.title.x = element_text(margin = margin(t = 4)),
-        axis.line = element_blank(),
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8,hjust=0.5),
-        legend.text = element_text(size = 8),
-        legend.position = "none"
-        )+
-        labs(y = "Position 8", x = "Position 10")
-
-figure_3c_lowerpanel <- mean_editing_per_loop_variant %>%
-    filter(boxb_8=="C"&boxb_9=="T"&boxb_10%in% c("T","C"),variable_subpos=="7_10",tada_type=="lambdaN",tada_conc=="250nM")%>% 
-    group_by(boxb_7_rc,boxb_13_rc)%>%
-    summarize(mean_percent=mean(mean_fraction_edited)*100, .groups="drop")%>%
-    ggplot(aes(x=boxb_7_rc,y=boxb_13_rc,fill=mean_percent))+
-        geom_tile()+
-        scale_fill_gradient(
-            name="Percent Edited",
-            low = "white", high = "black",
-            limits = c(0, 30),
-            guide = FALSE)+
-        theme(
-        axis.title.x = element_text(margin = margin(t = 4)),
-        axis.line = element_blank(),
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 8)
-        )+
-        labs(x = "Position 7", y = "Position 13")
-
-figure_3d_upperpanel<-mean_editing_per_loop_variant %>%
-    filter(boxb_7=="A"&boxb_13=="T",variable_subpos=="10_13",tada_type=="lambdaN",tada_conc=="250nM")%>% 
-    group_by(boxb_10_rc,boxb_12_rc)%>%
-    summarize(mean_percent=mean(mean_fraction_edited)*100, .groups="drop")%>%
-    ggplot(aes(x=boxb_12_rc,y=boxb_10_rc,fill=mean_percent))+
-        geom_tile()+
-        scale_fill_gradient(
-            name="Percent\nEdited",
-            low = "white", high = "black",
-            limits = c(10, 30),
-            guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"), na.value = "red")+
-        theme(
-            axis.title.x = element_text(margin = margin(t = 4)),
-            axis.line = element_blank(),
-            axis.title = element_text(size = 8),
-            axis.text = element_text(size = 8),
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 8),
-            legend.position = "none"
-            )+
-        labs(x = "Position 12", y = "Position 10")
-
-figure_3d_lowerpanel <- mean_editing_per_loop_variant %>%
-    filter(boxb_10  %in% c("T","C"),boxb_12=="T",variable_subpos=="10_13",tada_type=="lambdaN",tada_conc=="250nM")%>% 
-    group_by(boxb_7_rc,boxb_13_rc)%>%
-    summarize(mean_percent=mean(mean_fraction_edited)*100, .groups="drop")%>%
-    ggplot(aes(x=boxb_13_rc,y=boxb_7_rc,fill=mean_percent))+
-        geom_tile()+
-        scale_fill_gradient(
-            name="Percent\nEdited",
-            low = "white", high = "black",
-            limits = c(0, 30),
-            guide = FALSE)+
-        theme(
-            axis.title.x = element_text(margin = margin(t = 4)),
-            axis.line = element_blank(),
-            axis.title = element_text(size = 8),
-            axis.text = element_text(size = 8),
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 8)
-            )+
-        labs(x = "Position 13", y = "Position 7")
-
-shared_legend <- get_legend(
-  figure_3c_upperpanel + theme(
-    legend.position = "right",
-    legend.justification = "center"
+# Figure 3C: Upper panel (positions 8 vs 10)
+figure_3c_upper <- mean_editing_per_loop_variant %>%
+  filter(boxb_7 == "A" & boxb_13 == "T", variable_subpos == "7_10", 
+         tada_type == "lambdaN", tada_conc == "250nM") %>%
+  group_by(boxb_10_rc, boxb_8_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop") %>%
+  ggplot(aes(x = boxb_10_rc, y = boxb_8_rc, fill = mean_percent)) +
+  geom_tile() +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    limits = c(10, 30),
+    guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"),
+    na.value = "red"
+  ) +
+  labs(y = "Position 8", x = "Position 10") +
+  theme_figure +
+  theme(
+    axis.line = element_blank(),
+    legend.position = "none"
   )
+
+# Figure 3C: Lower panel (positions 7 vs 13 for GNRA variants)
+figure_3c_lower <- mean_editing_per_loop_variant %>%
+  filter(boxb_8 == "C" & boxb_9 == "T" & boxb_10 %in% c("T", "C"), 
+         variable_subpos == "7_10", tada_type == "lambdaN", tada_conc == "250nM") %>%
+  group_by(boxb_7_rc, boxb_13_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop") %>%
+  ggplot(aes(x = boxb_7_rc, y = boxb_13_rc, fill = mean_percent)) +
+  geom_tile() +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    limits = c(0, 30),
+    guide = "none"
+  ) +
+  labs(x = "Position 7", y = "Position 13") +
+  theme_figure +
+  theme(axis.line = element_blank())
+
+# Figure 3D: Upper panel (positions 10 vs 12)
+figure_3d_upper <- mean_editing_per_loop_variant %>%
+  filter(boxb_7 == "A" & boxb_13 == "T", variable_subpos == "10_13", 
+         tada_type == "lambdaN", tada_conc == "250nM") %>%
+  group_by(boxb_10_rc, boxb_12_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop") %>%
+  ggplot(aes(x = boxb_12_rc, y = boxb_10_rc, fill = mean_percent)) +
+  geom_tile() +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    limits = c(10, 30),
+    guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"),
+    na.value = "red"
+  ) +
+  labs(x = "Position 12", y = "Position 10") +
+  theme_figure +
+  theme(
+    axis.line = element_blank(),
+    legend.position = "none"
+  )
+
+# Figure 3D: Lower panel (positions 7 vs 13 for GNRA variants)
+figure_3d_lower <- mean_editing_per_loop_variant %>%
+  filter(boxb_10 %in% c("T", "C"), boxb_12 == "T", variable_subpos == "10_13", 
+         tada_type == "lambdaN", tada_conc == "250nM") %>%
+  group_by(boxb_7_rc, boxb_13_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop") %>%
+  ggplot(aes(x = boxb_13_rc, y = boxb_7_rc, fill = mean_percent)) +
+  geom_tile() +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    limits = c(0, 30),
+    guide = "none"
+  ) +
+  labs(x = "Position 13", y = "Position 7") +
+  theme_figure +
+  theme(axis.line = element_blank())
+
+# Extract shared legend
+shared_legend <- get_legend(
+  figure_3c_upper + theme(legend.position = "right")
 )
 
-top_row <- plot_grid(
-  figure_3c_upperpanel, figure_3d_upperpanel,
-  ncol = 2
-)
+# Combine heatmaps
+top_row <- plot_grid(figure_3c_upper, figure_3d_upper, ncol = 2)
+bottom_row <- plot_grid(figure_3c_lower, figure_3d_lower, ncol = 2)
 
-bottom_row <- plot_grid(
-  figure_3c_lowerpanel, figure_3d_lowerpanel,
-  ncol = 2
-)
+plots_3c_3d <- plot_grid(top_row, bottom_row, ncol = 1, rel_heights = c(1, 0.5))
+figure_3c_3f <- plot_grid(plots_3c_3d, shared_legend, rel_widths = c(1, 0.25))
 
-# Use ORIGINAL layout parameters
-plots3c_3d <- plot_grid(
-  top_row, bottom_row,
-  ncol = 1,
-  rel_heights = c(1, 0.5)  # ORIGINAL asymmetric layout
-)
+ggsave("../figures/fig3c_3f.pdf", figure_3c_3f, height = 1.6, width = 2.5, units = "in")
 
-final_plot <- plot_grid(
-  plots3c_3d, shared_legend,
-  rel_widths = c(1, 0.25)  # ORIGINAL legend spacing
-)
+# Figure 3G-3H: Stem Stability Analysis
+mean_editing_per_stem_variant <- target_data %>%
+  filter(variable_type == "boxb", 
+         sample_id %in% c("i79_p3", "i79_p5", "i79_p6", "i79_p10", "i79_p20", "i79_p2", "i79_p4", "i79_p8", "i79_p7")) %>%
+  filter(variable_subpos %in% c("1_3", "4_6", "14_16", "17_19")) %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = 1 - fraction_num_0_c) %>%
+  select(tada_type, tada_conc, condition, variable_subpos, insert, fraction_edited) %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert")) %>%
+  filter(!is.na(free_energy)) %>%
+  mutate(energy_bins = ntile(free_energy, 5)) %>%
+  group_by(tada_type, tada_conc, condition, variable_subpos, insert) %>%
+  summarize(mean_fraction_edited = mean(fraction_edited, na.rm = TRUE),
+            free_energy = first(free_energy),
+            energy_bins = first(energy_bins),
+            .groups = "drop")
 
-print(final_plot)
-ggsave("../figures/figure_3c_3d.pdf", height=1.6, width=2.5)  # ORIGINAL dimensions
+# Figure 3G: Free energy distribution
+figure_3g <- mean_editing_per_stem_variant %>%
+  filter(condition == "37_2hr", tada_type == "lambdaN") %>%
+  ggplot(aes(x = free_energy)) +
+  geom_histogram(fill = "gray70", color = "white", bins = 30) +
+  labs(x = "G (kJ/mol, RNAFold)", y = "# BoxB Variants") +
+  theme_figure
 
-# Generate Figure 3i/3j (stem stability)
-figure_3j <- mean_editing_per_stem_variant %>%   
-    filter(tada_type=="lambdaN",tada_conc=="250nM")%>%
-    ggplot(aes(x=as_factor(energy_bins),y=mean_fraction_edited*100,fill=factor(condition,levels=c("37_30min","37_1hr","37_2hr"))))+
-    geom_boxplot(width = 0.6,  color = "black", outlier.shape = NA )+
-    theme_classic()+
-    scale_y_continuous(limits=c(0,48))+
-    scale_x_discrete(labels=c("0-20% \n -14.5-8.6","21-40% \n -8.7-6.0","41-60% \n -6.1-5.2","61-80% \n -5.3-3.4","81-100% \n -3.3-0.3"))+
-    scale_fill_manual(values=cbPalette,labels=c("30 min","1 hr","2 hr"))+
-    theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey"),
-      legend.position = "none"
-    )+
-        labs(x = "Free Energy Percentile\n(Interval in kJ/mol)", y = "Percent Edited",fill="Timepoint")+
-    stat_compare_means(
-        method = "wilcox.test",      
-        label = "p.signif",           
-        comparisons = list(c("1","2"),c("2","3"),c("3","4"),c("4","5")),
-        label.y = c(45, 40, 35, 30),
-        size=3)
+# Figure 3H: Energy bins vs editing
+figure_3h <- mean_editing_per_stem_variant %>%
+  filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
+  ggplot(aes(x = as_factor(energy_bins), y = mean_fraction_edited * 100, 
+             fill = factor(condition, levels = time_order))) +
+  geom_boxplot(width = 0.6, color = "black", outlier.shape = NA) +
+  scale_y_continuous(limits = c(0, 48)) +
+  scale_x_discrete(labels = c("0-20%\n-14.5-8.6", "21-40%\n-8.7-6.0", "41-60%\n-6.1-5.2", 
+                              "61-80%\n-5.3-3.4", "81-100%\n-3.3-0.3")) +
+  scale_fill_manual(values = cbPalette, labels = c("30 min", "1 hr", "2 hr")) +
+  labs(x = "Free Energy Percentile\n(Interval in kJ/mol)", y = "% Edited RNA", fill = "Timepoint") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.signif",
+    comparisons = list(c("1", "2"), c("2", "3"), c("3", "4"), c("4", "5")),
+    label.y = c(45, 40, 35, 30),
+    size = 2
+  ) +
+  theme_figure +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
 
-figure_3i <- mean_editing_per_stem_variant %>%
-    filter(condition=="37_2hr",tada_type=="lambdaN")%>%
-    ggplot(aes(x=free_energy))+
-    geom_histogram(fill = "gray70", color = "white")+
-    theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey"),
-      legend.position = "none"
-    )+
-    labs(x = "G (kJ/mol, RNAFold)", y = "# BoxB Variants")
+# Combine stem analysis figures
+figure_3g_3h <- plot_grid(figure_3g, figure_3h, ncol = 1, rel_heights = c(1.25, 2))
 
-figure_3i_3j<-plot_grid(figure_3i,figure_3j,ncol=1,rel_heights = c(1.25, 2))
+ggsave("../figures/fig3g_3h.pdf", figure_3g_3h, height = 3.25, width = 2.25, units = "in")
 
-print(figure_3i_3j)
-ggsave("../figures/figure_3i_3j.pdf",height = 3.25,width = 2.25)
+# Save summary data
+write_csv(editing_per_loop_variant %>% 
+          filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
+          mutate(fraction_edited = signif(fraction_edited, 2)) %>%
+          select(variable_subpos, insert, gnra, fraction_edited), 
+          "../tables/fig3b_plot_data.csv")
 
-cat("Figure 3 generation completed successfully!\n")
-cat("Generated files:\n")
-cat("  - ../figures/gnra.pdf\n")
-cat("  - ../figures/figure_3c_3d.pdf\n")
-cat("  - ../figures/figure_3i_3j.pdf\n")
-cat("  - Associated data tables in ../tables/\n")
+write_csv(mean_editing_per_loop_variant %>% 
+          filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
+          mutate(mean_fraction_edited = signif(mean_fraction_edited, 2)) %>%
+          select(variable_subpos, insert, boxb_7, boxb_8, boxb_9, boxb_10, boxb_11, boxb_12, boxb_13, mean_fraction_edited), 
+          "../tables/fig3c_3f_plot_data.csv")
+
+write_csv(mean_editing_per_stem_variant %>% 
+          filter(tada_type == "lambdaN", tada_conc == "250nM") %>%
+          mutate(mean_fraction_edited = signif(mean_fraction_edited, 2),
+                 free_energy = signif(free_energy, 2)) %>%
+          select(condition, variable_subpos, insert, energy_bins, free_energy, mean_fraction_edited), 
+          "../tables/fig3g_3h_plot_data.csv")
+
+cat("Figure 3 generation complete!\n")
