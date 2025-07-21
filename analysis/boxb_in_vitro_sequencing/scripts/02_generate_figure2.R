@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
 loop_data <- read_csv("../tables/loop_data_processed.csv", show_col_types = FALSE)
 boxb_wt_mut_stems <- read_csv("../tables/boxb_wt_mut_stems.csv", show_col_types = FALSE)
+wildtype_boxb_random_inserts <- read_csv("../tables/wildtype_boxb_random_inserts.csv", show_col_types = FALSE)
 
 # Read constants
 constants_df <- read_csv("../tables/constants_processed.csv", show_col_types = FALSE)
@@ -115,6 +116,33 @@ mean_editing_per_time <- target_data %>%
   summarize(mean = 100 * mean(fraction_edited), 
             se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
 
+# Calculate fold change for time course
+fold_change_time_df <- mean_editing_per_time %>%
+  select(tada_type, condition, edit_type, insert_type, mean) %>%
+  pivot_wider(names_from = insert_type, values_from = mean) %>%
+  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
+         y.position = pmax(wt, mut) + 6)
+
+# Statistical tests for time course
+stat_data_time <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("lambdaN"), tada_conc == "250nM") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, condition, edit_type) %>%
+  do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
+  ungroup() %>%
+  mutate(p_adj = p.adjust(p.value, method = "BH"),
+         significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
+                                 p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
+  left_join(mean_editing_per_time %>% 
+            group_by(tada_type, condition, edit_type) %>% 
+            summarize(y.position = max(mean) + 3, .groups = "drop"), 
+            by = c("tada_type", "condition", "edit_type")) %>%
+  mutate(group1 = "mut", group2 = "wt", label = significance)
+
 p_time <- mean_editing_per_time %>%
   ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
             fill = paste(edit_type, insert_type, sep = "_"))) +
@@ -123,11 +151,19 @@ p_time <- mean_editing_per_time %>%
   facet_grid(tada_type ~ fct_relevel(condition, time_order), scales = "free_y",
             labeller = labeller(tada_type = c("lambdaN" = "λN-TadA"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
-  scale_fill_manual(values = bar_colors, name = NULL) +
+  scale_fill_manual(values = bar_colors,
+                    labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
+                              "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
+                    name = NULL) +
   labs(x = NULL, y = "Edited (%)") +
-  theme_figure
+  theme_figure +
+  stat_pvalue_manual(data = stat_data_time %>% filter(significance != "ns"),
+                    x = "edit_type", y.position = "y.position", 
+                    tip.length = 0.01, size = 2, inherit.aes = FALSE) +
+  geom_text(data = fold_change_time_df, aes(x = edit_type, y = y.position, label = label),
+            inherit.aes = FALSE, size = 2.2)
 
-ggsave("../figures/fig2b_recorder_time.png", width = 6, height = 2, units = "in", dpi = 600)
+ggsave("../figures/fig2b_recorder_time.png", width = 4.2, height = 1.125, units = "in", dpi = 600)
 
 # Figure 2B: Loop Region Analysis
 mean_loop_editing_per_concentration <- loop_data %>%
@@ -179,11 +215,11 @@ ggsave("../figures/fig2b_loop_concentration.png", width = 2.5, height = 2, units
 
 # Figure 2C: Distance Dependence
 plot_data <- target_data %>%
-  filter(variable_type == "target", tada_type == "tada_only", 
+  filter(variable_type == "target", tada_type %in% c("tada_only", "lambdaN"),
          tada_conc == "250nM", condition == "37_2hr") %>%
   mutate(fraction_2to4edit = (num_1_c + num_3_c + num_4_c) / umi_counts) %>%
-  select(target_dist, target_pos_to_boxb, fraction_2to4edit) %>%
-  group_by(target_pos_to_boxb, target_dist) %>%
+  select(tada_type, target_dist, target_pos_to_boxb, fraction_2to4edit) %>%
+  group_by(target_pos_to_boxb, target_dist, tada_type) %>%
   summarize(mean = mean(fraction_2to4edit), se = sd(fraction_2to4edit) / sqrt(n()),
             n = n(), .groups = "drop") %>%
   mutate(absolute_dist = case_when(target_pos_to_boxb == "5" ~ 30 - target_dist,
@@ -191,6 +227,7 @@ plot_data <- target_data %>%
 
 p_distance <- plot_data %>%
   ggplot(aes(x = absolute_dist, y = mean * 100, color = target_pos_to_boxb)) +
+  facet_wrap(~tada_type, ncol = 2, labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
   geom_point() +
   geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), width = 0.25) +
   scale_y_continuous(limits = c(0, 60)) +
@@ -202,11 +239,63 @@ p_distance <- plot_data %>%
 
 ggsave("../figures/fig2c.png", height = 1.25, width = 4, dpi = 600)
 
+# Figure 2D: Position Context Analysis
+position_labs <- c("7" = "UAG",
+                  "6" = "GAA", 
+                  "5" = "AAU",
+                  "4" = "UAC",
+                  "3" = "CAC",
+                  "2" = "CAU",
+                  "1" = "UAA",
+                  "0" = "AAU")
+position_order <- c("7", "6", "5", "4", "3", "2", "1", "0")
+
+individual_a_editing_context_constant <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         tada_type %in% c("lambdaN", "tada_only"), condition == "37_2hr") %>%
+  inner_join(wildtype_boxb_random_inserts, by = c("variable_subpos", "insert" = "wt_insert")) %>%
+  mutate(across(matches("pos_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}")) %>%
+  select(tada_type, tada_conc, target_dist, matches("fraction_")) %>%
+  group_by(tada_type, tada_conc) %>%
+  summarize(across(matches("fraction_"), ~mean(.x), .names = "mean_{col}"),
+            across(starts_with("fraction_"), ~sd(.x)/sqrt(n()), .names = "se_{col}"),
+            across(starts_with("fraction_"), ~n(), .names = "n_{col}"),
+            .groups = "drop") %>%
+  pivot_longer(
+    cols = c(starts_with("mean_"), starts_with("se_"), starts_with("n_")), 
+    names_to = c(".value", "position"),
+    names_pattern = "(mean|se|n)_fraction_pos_(\\d+)_c"
+  ) %>%
+  group_by(tada_conc, tada_type) %>%
+  mutate(scaled_mean = rank(mean))
+
+p_position_context <- individual_a_editing_context_constant %>%
+  filter(tada_conc == "250nM") %>%
+  ggplot(aes(x = factor(position, level = position_order), y = mean * 100, 
+             color = as_factor(scaled_mean))) +  
+  geom_point(size = 1.5) +
+  geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), 
+                width = 0.25, linewidth = 0.3) +
+  facet_wrap(~ tada_type, ncol = 2, 
+             labeller = labeller(tada_type = c("lambdaN" = "λN-TadA", "tada_only" = "TadA"))) +
+  scale_x_discrete(labels = position_labs) +
+  scale_y_continuous() +
+  scale_color_brewer(palette = "RdBu", direction = -1) +
+  guides(color = "none") +
+  labs(x = "Recorder Position Context", y = "Percent Edited") +
+  theme_figure +
+  theme(axis.line = element_line(color = "grey"))
+
+ggsave("../figures/fig2d.png", width = 3, height = 2, units = "in", dpi = 600)
+
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
           "../tables/fig2b_recorder.csv")
 write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
           "../tables/fig2b_loop.csv")
 write_csv(plot_data, "../tables/fig2c_plot_data.csv")
+write_tsv(individual_a_editing_context_constant %>% 
+          filter(tada_conc == "250nM"), 
+          "../tables/fig_2d_data.tsv")
 
 cat("Figure 2 generation complete!\n")
