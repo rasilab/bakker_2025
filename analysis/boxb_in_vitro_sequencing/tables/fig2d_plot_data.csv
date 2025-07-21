@@ -1,0 +1,9 @@
+tada_conc,tada_type,position,mean,se
+250nM,lambdaN,0,0.039,0.01
+250nM,lambdaN,1,0.067,0.012
+250nM,lambdaN,2,0.017,0.0056
+250nM,lambdaN,3,0.033,0.0071
+250nM,lambdaN,4,0.12,0.013
+250nM,lambdaN,5,0.041,0.0048
+250nM,lambdaN,6,0.054,0.0054
+250nM,lambdaN,7,0.17,0.016

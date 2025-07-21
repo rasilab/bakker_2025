@@ -94,7 +94,7 @@ p_concentration <- mean_editing_per_concentration %>%
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
                               "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
                     name = NULL) +
-  labs(x = NULL, y = "% edited RNA") +
+  labs(x = NULL, y = "% Edited RNA") +
   theme_figure +
   stat_pvalue_manual(data = stat_data %>% filter(significance != "ns"),
                     x = "edit_type", y.position = "y.position", 
@@ -155,7 +155,7 @@ p_time <- mean_editing_per_time %>%
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
                               "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
                     name = NULL) +
-  labs(x = NULL, y = "% edited RNA") +
+  labs(x = NULL, y = "% Edited RNA") +
   theme_figure +
   stat_pvalue_manual(data = stat_data_time %>% filter(significance != "ns"),
                     x = "edit_type", y.position = "y.position", 
@@ -185,7 +185,7 @@ p_loop <- mean_loop_editing_per_concentration %>%
             labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors, name = NULL) +
-  labs(x = NULL, y = "% edited RNA") +
+  labs(x = NULL, y = "% Edited RNA") +
   theme_figure
 
 ggsave("../figures/fig2b_loop.pdf", width = 3, height = 3, units = "in")
@@ -208,7 +208,7 @@ p_loop_concentration <- mean_loop_editing_per_concentration %>%
                      labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"), name = NULL) +
   scale_shape_manual(values = c("wt" = 16, "mut" = 17),
                      labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
-  labs(y = "% edited RNA") +
+  labs(y = "% Edited RNA") +
   theme_figure
 
 ggsave("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2, units = "in")
@@ -232,7 +232,7 @@ p_distance <- plot_data %>%
   geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), width = 0.25) +
   scale_y_continuous(limits = c(0, 60)) +
   guides(color = "none") +
-  labs(x = "Recorder Position (nt)", y = "% edited RNA") +
+  labs(x = "Recorder Position (nt)", y = "% Edited RNA") +
   theme_classic() +
   theme(axis.title = element_text(size = 8), axis.text = element_text(size = 8),
         axis.line = element_line(color = "grey"))
@@ -280,21 +280,24 @@ figure_2d <- individual_a_editing_context_constant %>%
   scale_y_continuous() +
   scale_color_brewer(palette = "RdBu", direction = -1) +
   guides(color = "none") +
-  labs(x = "Recorder Position Context", y = "% edited RNA") +
+  labs(x = "Recorder Position Context", y = "% Edited RNA") +
   theme_figure +
   theme(axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2d.pdf", width = 3, height = 4, units = "in")
+ggsave("../figures/fig2d.pdf", width = 3, height = 1.5, units = "in")
 
 # Save summary data
-write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
+write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig2b_recorder.csv")
-write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
+write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig2b_loop.csv")
-write_csv(plot_data, "../tables/fig2c_plot_data.csv")
-write_tsv(individual_a_editing_context_constant %>% 
-          filter(tada_conc == "250nM"), 
-          "../tables/fig_2d_data.tsv")
+write_csv(plot_data %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
+          "../tables/fig2c_plot_data.csv")
+write_csv(individual_a_editing_context_constant %>% 
+          filter(tada_conc == "250nM", tada_type == "lambdaN") %>%
+          mutate(across(c(mean, se), ~ signif(.x, 2))) %>%
+          select(position, mean, se), 
+          "../tables/fig2d_plot_data.csv")
 
 # Figure 2E: Sequence Context Analysis
 context_data <- target_data %>%
@@ -363,7 +366,7 @@ figure_2e <- individual_a_editing_context_variable %>%
              labeller = as_labeller(subset_position_labs), nrow = 1) +
   geom_tile() +
   scale_fill_gradient(
-    name = "% edited\nRNA",
+    name = "% Edited\nRNA",
     low = "grey93", high = "black",
     limits = c(0, 48),
     guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black",
@@ -379,7 +382,13 @@ figure_2e <- individual_a_editing_context_variable %>%
     strip.text.x = element_text(size = 6)
   )
 
-ggsave("../figures/fig2e.pdf", figure_2e, width = 4, height = 2.5, units = "in")
+ggsave("../figures/fig2e.pdf", figure_2e, width = 4, height = 1.125, units = "in")
+
+# Save Figure 2E plot data
+write_csv(individual_a_editing_context_variable %>% 
+          mutate(mean = signif(mean, 2)) %>%
+          select(position, fiveprime, threeprime, mean), 
+          "../tables/fig2e_plot_data.csv")
 
 # Combined Figure 2D and 2E
 combined_2d_2e <- plot_grid(
