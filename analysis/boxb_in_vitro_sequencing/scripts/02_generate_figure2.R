@@ -94,7 +94,7 @@ p_concentration <- mean_editing_per_concentration %>%
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
                               "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
                     name = NULL) +
-  labs(x = NULL, y = "Edited (%)") +
+  labs(x = NULL, y = "% edited RNA") +
   theme_figure +
   stat_pvalue_manual(data = stat_data %>% filter(significance != "ns"),
                     x = "edit_type", y.position = "y.position", 
@@ -102,7 +102,7 @@ p_concentration <- mean_editing_per_concentration %>%
   geom_text(data = fold_change_df, aes(x = edit_type, y = y.position, label = label),
             inherit.aes = FALSE, size = 2.2)
 
-ggsave("../figures/fig2b_recorder.png", width = 3, height = 3, units = "in", dpi = 600)
+ggsave("../figures/fig2b_recorder.pdf", width = 3, height = 3, units = "in")
 
 # Figure 2B: Time Course Analysis
 mean_editing_per_time <- target_data %>%
@@ -155,7 +155,7 @@ p_time <- mean_editing_per_time %>%
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
                               "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
                     name = NULL) +
-  labs(x = NULL, y = "Edited (%)") +
+  labs(x = NULL, y = "% edited RNA") +
   theme_figure +
   stat_pvalue_manual(data = stat_data_time %>% filter(significance != "ns"),
                     x = "edit_type", y.position = "y.position", 
@@ -163,7 +163,7 @@ p_time <- mean_editing_per_time %>%
   geom_text(data = fold_change_time_df, aes(x = edit_type, y = y.position, label = label),
             inherit.aes = FALSE, size = 2.2)
 
-ggsave("../figures/fig2b_recorder_time.png", width = 4.2, height = 1.125, units = "in", dpi = 600)
+ggsave("../figures/fig2b_recorder_time.pdf", width = 4.2, height = 1.125, units = "in")
 
 # Figure 2B: Loop Region Analysis
 mean_loop_editing_per_concentration <- loop_data %>%
@@ -185,10 +185,10 @@ p_loop <- mean_loop_editing_per_concentration %>%
             labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors, name = NULL) +
-  labs(x = NULL, y = "Edited (%, loop)") +
+  labs(x = NULL, y = "% edited RNA") +
   theme_figure
 
-ggsave("../figures/fig2b_loop.png", width = 3, height = 3, units = "in", dpi = 600)
+ggsave("../figures/fig2b_loop.pdf", width = 3, height = 3, units = "in")
 
 # Loop Concentration Dependence
 p_loop_concentration <- mean_loop_editing_per_concentration %>%
@@ -208,10 +208,10 @@ p_loop_concentration <- mean_loop_editing_per_concentration %>%
                      labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"), name = NULL) +
   scale_shape_manual(values = c("wt" = 16, "mut" = 17),
                      labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
-  labs(y = "Edited (%)") +
+  labs(y = "% edited RNA") +
   theme_figure
 
-ggsave("../figures/fig2b_loop_concentration.png", width = 2.5, height = 2, units = "in", dpi = 600)
+ggsave("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2, units = "in")
 
 # Figure 2C: Distance Dependence
 plot_data <- target_data %>%
@@ -232,12 +232,12 @@ p_distance <- plot_data %>%
   geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), width = 0.25) +
   scale_y_continuous(limits = c(0, 60)) +
   guides(color = "none") +
-  labs(x = "Recorder Position (nt)", y = "Percent Edited") +
+  labs(x = "Recorder Position (nt)", y = "% edited RNA") +
   theme_classic() +
   theme(axis.title = element_text(size = 8), axis.text = element_text(size = 8),
         axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2c.png", height = 1.25, width = 4, dpi = 600)
+ggsave("../figures/fig2c.pdf", height = 1.25, width = 4, units = "in")
 
 # Figure 2D: Position Context Analysis
 position_labs <- c("7" = "UAG",
@@ -269,24 +269,22 @@ individual_a_editing_context_constant <- target_data %>%
   group_by(tada_conc, tada_type) %>%
   mutate(scaled_mean = rank(mean))
 
-p_position_context <- individual_a_editing_context_constant %>%
-  filter(tada_conc == "250nM") %>%
+figure_2d <- individual_a_editing_context_constant %>%
+  filter(tada_conc == "250nM", tada_type == "lambdaN") %>%
   ggplot(aes(x = factor(position, level = position_order), y = mean * 100, 
              color = as_factor(scaled_mean))) +  
   geom_point(size = 1.5) +
   geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), 
                 width = 0.25, linewidth = 0.3) +
-  facet_wrap(~ tada_type, ncol = 1, scales = "free_x", 
-             labeller = labeller(tada_type = c("lambdaN" = "λN-TadA", "tada_only" = "TadA"))) +
   scale_x_discrete(labels = position_labs) +
   scale_y_continuous() +
   scale_color_brewer(palette = "RdBu", direction = -1) +
   guides(color = "none") +
-  labs(x = "Recorder Position Context", y = "Percent Edited") +
+  labs(x = "Recorder Position Context", y = "% edited RNA") +
   theme_figure +
   theme(axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2d.png", width = 3, height = 4, units = "in", dpi = 600)
+ggsave("../figures/fig2d.pdf", width = 3, height = 4, units = "in")
 
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 3))), 
@@ -297,5 +295,99 @@ write_csv(plot_data, "../tables/fig2c_plot_data.csv")
 write_tsv(individual_a_editing_context_constant %>% 
           filter(tada_conc == "250nM"), 
           "../tables/fig_2d_data.tsv")
+
+# Figure 2E: Sequence Context Analysis
+context_data <- target_data %>%
+  filter(sample_id == "i79_p3", variable_type == "target", target_pos_to_boxb == "5") %>%
+  mutate(across(matches("pos_._c"), ~ .x / umi_counts, .names = "fraction_{col}")) %>%
+  select(insert, variable_subpos, umi_counts, starts_with("fraction_")) %>%
+  filter(umi_counts > 50) %>%
+  group_by(insert, variable_subpos) %>%
+  summarize(across(starts_with("fraction_"), ~ mean(.x), .names = "mean_{col}"),
+            across(starts_with("fraction_"), ~ sd(.x) / sqrt(n()), .names = "se_{col}"),
+            .groups = "drop")
+
+five_prime_variable <- context_data %>%
+  filter(variable_subpos == "5") %>%
+  select(insert, variable_subpos, mean_fraction_pos_7_c, mean_fraction_pos_4_c) %>%
+  mutate(
+    fiveprime_7 = str_sub(insert, 5, 5),
+    threeprime_7 = str_sub(insert, 4, 4),
+    fiveprime_4 = str_sub(insert, 2, 2),
+    threeprime_4 = str_sub(insert, 1, 1),
+    across(matches("prime"), ~ case_when(
+      .x %in% c("T", "C") ~ "R",
+      .x == "A" ~ "U",
+      .x == "G" ~ "C"
+    ), .names = "{col}_id")
+  ) %>%
+  select(starts_with("mean"), ends_with("_id")) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(".value", "position"),
+    names_pattern = "(.*)_(\\d+)"
+  ) %>%
+  group_by(position, fiveprime, threeprime) %>%
+  summarize(mean = mean(mean_fraction_pos), .groups = "drop")
+
+individual_a_editing_context_variable <- context_data %>%
+  filter(variable_subpos == "3") %>%
+  select(insert, variable_subpos, mean_fraction_pos_3_c, mean_fraction_pos_2_c) %>%
+  mutate(
+    fiveprime_3 = str_sub(insert, 5, 5),
+    threeprime_3 = str_sub(insert, 4, 4),
+    fiveprime_2 = str_sub(insert, 3, 3),
+    threeprime_2 = str_sub(insert, 2, 2),
+    across(matches("prime"), ~ case_when(
+      .x %in% c("T", "C") ~ "R",
+      .x == "A" ~ "U",
+      .x == "G" ~ "C"
+    ), .names = "{col}_id")
+  ) %>%
+  select(starts_with("mean"), ends_with("_id")) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(".value", "position"),
+    names_pattern = "(.*)_(\\d+)"
+  ) %>%
+  group_by(position, fiveprime, threeprime) %>%
+  summarize(mean = mean(mean_fraction_pos), .groups = "drop") %>%
+  bind_rows(five_prime_variable)
+
+subset_position_labs <- c("7" = "UAG", "4" = "UAC", "3" = "CAC", "2" = "CAU")
+subset_position_order <- c("7", "4", "3", "2")
+
+figure_2e <- individual_a_editing_context_variable %>%
+  ggplot(aes(y = fiveprime, x = threeprime, fill = mean * 100)) +
+  facet_wrap(~ factor(position, level = subset_position_order),
+             labeller = as_labeller(subset_position_labs), nrow = 1) +
+  geom_tile() +
+  scale_fill_gradient(
+    name = "% edited\nRNA",
+    low = "grey93", high = "black",
+    limits = c(0, 48),
+    guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black",
+                          title.theme = element_text(size = 6)),
+    na.value = "red"
+  ) +
+  labs(y = "5' Flanking\nBase", x = "3' Flanking Base") +
+  theme_figure +
+  theme(
+    axis.line = element_blank(),
+    legend.title = element_text(hjust = 0.5, size = 6),
+    legend.text = element_text(size = 5),
+    strip.text.x = element_text(size = 6)
+  )
+
+ggsave("../figures/fig2e.pdf", figure_2e, width = 4, height = 2.5, units = "in")
+
+# Combined Figure 2D and 2E
+combined_2d_2e <- plot_grid(
+  figure_2d, figure_2e,
+  ncol = 1,
+  align = "hv"
+)
+
+ggsave("../figures/figure_2d_2e.pdf", combined_2d_2e, height = 2.25, width = 3.25, units = "in")
 
 cat("Figure 2 generation complete!\n")
