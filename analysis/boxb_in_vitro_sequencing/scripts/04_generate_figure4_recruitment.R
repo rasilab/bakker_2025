@@ -1,126 +1,144 @@
-#!/usr/bin/env Rscript
-
-# Module 4: Figure 4 & Recruitment Analysis
-# Generate Figure 4 and recruitment strategy comparisons
-
-options(warn = -1)
+# Generate Figure 4 Panels
+# Reads processed data and generates Figure 4 recruitment analysis panels
 
 suppressPackageStartupMessages({
-  library(plyranges)
   library(tidyverse)
-  library(rasilabRtemplates)
   library(ggpubr)
-  library(RColorBrewer)
-  library(Biostrings)
   library(cowplot)
 })
 
-cat("Loading processed data for Figure 4 and recruitment analysis...\n")
+# Read processed data
+target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
+loop_data <- read_csv("../tables/loop_data_processed.csv", show_col_types = FALSE)
+boxb_wt_mut_stems <- read_csv("../tables/boxb_wt_mut_stems.csv", show_col_types = FALSE)
 
-# Load processed data
-target_data <- read_csv("../tables/target_data.csv", show_col_types = FALSE)
-loop_data <- read_csv("../tables/loop_data.csv", show_col_types = FALSE)
-hairpin_annotations <- read_csv("../tables/hairpin_annotations.csv", show_col_types = FALSE)
+# Read constants
+constants_df <- read_csv("../tables/constants_processed.csv", show_col_types = FALSE)
 
-# Load existing processed tables
-editing_per_loop_variant <- read_tsv("../tables/editing_per_loop_variant.tsv", show_col_types = FALSE)
-
-cat("Data loaded successfully\n")
-
-# Create output directories
-dir.create("../figures", showWarnings = FALSE, recursive = TRUE)
-dir.create("../tables", showWarnings = FALSE, recursive = TRUE)
-
-cat("Calculating recruitment strategy statistics...\n")
-
-# Calculate mean editing per recruitment type (simplified version)
-mean_editing_per_recruitment_type <- target_data %>%
-  filter(variable_type=="target", g_depleted=="no", sample_id %in% c("i79_p3","i79_p4","i79_p8")) %>%
-  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}")) %>%
-  mutate(fraction_edited=1-fraction_num_0_c) %>%
-  group_by(tada_type, tada_conc) %>%
-  summarize(mean_editing = mean(fraction_edited, na.rm=T),
-            se_editing = sd(fraction_edited, na.rm=T)/sqrt(n()),
-            .groups = "drop")
-
-write_tsv(mean_editing_per_recruitment_type,"../tables/mean_editing_per_recruitment_type.tsv")
-
-cat("Generating placeholder Figure 4 plots...\n")
-
-# Generate a simple recruitment comparison plot
-recruitment_plot <- mean_editing_per_recruitment_type %>%
-  ggplot(aes(x=tada_conc, y=mean_editing*100, color=tada_type)) +
-  geom_point(size=2) +
-  geom_errorbar(aes(ymin=(mean_editing-se_editing)*100, ymax=(mean_editing+se_editing)*100), width=0.1) +
-  theme_classic() +
-  labs(x="TadA Concentration", y="Percent Edited", color="TadA Type") +
+# Common theme for all plots
+theme_figure <- theme_classic() +
   theme(
-    axis.title = element_text(size = 8),
-    axis.text = element_text(size = 8),
-    legend.title = element_text(size = 8),
-    legend.text = element_text(size = 8)
+    axis.text = element_text(size = 5, color = "black"),
+    axis.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 5, color = "black"),
+    strip.text = element_text(size = 6, color = "black"),
+    panel.spacing = unit(0.2, "lines"),
+    legend.position = "right",
+    legend.key.size = unit(0.3, "cm"),
+    axis.line = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks = element_line(linewidth = 0.2, color = "black"),
+    axis.ticks.length = unit(0.05, "cm"),
+    strip.background = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    plot.background = element_rect(fill = "white"),
+    plot.margin = margin(2, 2, 2, 2, "mm")
   )
 
-print(recruitment_plot)
-ggsave("../figures/figure_4c.pdf", height=2, width=3)
+# Common colors
+bar_colors <- c("frac_1edit_mut" = "#cccccc", "frac_1edit_wt" = "#a6dbe5",
+                "frac_2edit_mut" = "#888888", "frac_2edit_wt" = "#337ab7")
 
-# Generate total edits comparison
-total_edits_plot <- mean_editing_per_recruitment_type %>%
-  ggplot(aes(x=tada_type, y=mean_editing*100, fill=tada_type)) +
-  geom_bar(stat="identity") +
-  theme_classic() +
-  labs(x="TadA Type", y="Total Percent Edited") +
-  theme(
-    axis.title = element_text(size = 8),
-    axis.text = element_text(size = 8),
-    legend.position = "none"
-  )
+# Define cbPalette for concentration plots
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-print(total_edits_plot)
-ggsave("../figures/total_edits_types.pdf", height=2, width=2.5)
+# Figure 4A: Recorder Region Analysis for recruitment samples
+mean_editing_per_recruitment_recorder <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
+  summarize(mean = 100 * mean(fraction_edited), 
+            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
 
-# Generate simplified recruitment heatmaps
-if(nrow(editing_per_loop_variant) > 0) {
-  heatmap_data <- editing_per_loop_variant %>%
-    filter(tada_type %in% c("lambdaN", "tada_only"), tada_conc == "250nM") %>%
-    group_by(tada_type, gnra) %>%
-    summarize(mean_editing = mean(fraction_edited, na.rm=T), .groups = "drop")
-  
-  heatmap_plot <- heatmap_data %>%
-    ggplot(aes(x=gnra, y=tada_type, fill=mean_editing*100)) +
-    geom_tile() +
-    scale_fill_gradient(low="white", high="darkblue") +
-    theme_minimal() +
-    labs(x="GNRA Status", y="TadA Type", fill="% Edited")
-  
-  print(heatmap_plot)
-  ggsave("../figures/recruitment_heatmaps_8_10.pdf", height=1.5, width=2.5)
-}
+# Calculate fold change and statistical tests for recorder
+fold_change_recorder_df <- mean_editing_per_recruitment_recorder %>%
+  select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
+  pivot_wider(names_from = insert_type, values_from = mean) %>%
+  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
+         y.position = pmax(wt, mut) + 6)
 
-# Generate correlation plots placeholder
-correlation_data <- target_data %>%
-  filter(variable_type=="target", umi_counts > 100) %>%
-  mutate(fraction_edited = 1 - num_0_c/umi_counts) %>%
-  select(tada_type, tada_conc, fraction_edited) %>%
-  pivot_wider(names_from = c(tada_type), values_from = fraction_edited, 
-              values_fn = mean, names_prefix = "editing_")
+stat_data_recorder <- target_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, 
+         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type) %>%
+  do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
+  ungroup() %>%
+  mutate(p_adj = p.adjust(p.value, method = "BH"),
+         significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
+                                 p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
+  left_join(mean_editing_per_recruitment_recorder %>% 
+            group_by(tada_type, tada_conc, edit_type) %>% 
+            summarize(y.position = max(mean) + 3, .groups = "drop"), 
+            by = c("tada_type", "tada_conc", "edit_type")) %>%
+  mutate(group1 = "mut", group2 = "wt", label = significance)
 
-if(ncol(correlation_data) > 2) {
-  correlation_plot <- correlation_data %>%
-    ggplot(aes(x=editing_lambdaN, y=editing_tada_only)) +
-    geom_point(alpha=0.6) +
-    geom_smooth(method="lm") +
-    theme_classic() +
-    labs(x="λN-TadA Editing", y="TadA Editing")
-  
-  print(correlation_plot)
-  ggsave("../figures/tada_vs_ln_tada.pdf", height=2, width=2)
-}
+# Plot recorder analysis
+p_recorder_recruitment <- mean_editing_per_recruitment_recorder %>%
+  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+            fill = paste(edit_type, insert_type, sep = "_"))) +
+  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  facet_grid(tada_conc ~ tada_type, scales = "free_y",
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+  scale_fill_manual(values = bar_colors,
+                    labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
+                              "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
+                    name = NULL) +
+  labs(x = NULL, y = "% Edited RNA") +
+  theme_figure +
+  stat_pvalue_manual(data = stat_data_recorder %>% filter(significance != "ns"),
+                    x = "edit_type", y.position = "y.position", 
+                    tip.length = 0.01, size = 2, inherit.aes = FALSE) +
+  geom_text(data = fold_change_recorder_df, aes(x = edit_type, y = y.position, label = label),
+            inherit.aes = FALSE, size = 2.2)
 
-cat("Figure 4 and recruitment analysis completed successfully!\n")
-cat("Generated files:\n")
-cat("  - ../figures/figure_4c.pdf\n")
-cat("  - ../figures/total_edits_types.pdf\n")
-cat("  - ../figures/recruitment_heatmaps_8_10.pdf\n")
-cat("  - ../figures/tada_vs_ln_tada.pdf\n")
-cat("  - Associated data tables in ../tables/\n")
+# Loop Region Analysis for recruitment samples
+mean_loop_editing_per_recruitment <- loop_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
+         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, frac_2edit = (num_2_c + num_3_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
+  summarize(mean = 100 * mean(fraction_edited), 
+            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
+
+p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
+  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+            fill = paste(edit_type, insert_type, sep = "_"))) +
+  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  facet_grid(tada_conc ~ tada_type, scales = "free_y",
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+  scale_fill_manual(values = bar_colors, name = NULL) +
+  labs(x = NULL, y = "% Edited RNA") +
+  theme_figure
+
+# Combine recorder and loop analysis
+figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1, 
+                       labels = c("Recorder", "Loop"), label_size = 6)
+
+ggsave("../figures/fig4a.pdf", figure_4a, width = 3, height = 6, units = "in")
+
+# Save summary data
+write_csv(mean_editing_per_recruitment_recorder %>% 
+          mutate(across(c(mean, se), ~ signif(.x, 2))), 
+          "../tables/fig4a_recorder_plot_data.csv")
+
+write_csv(mean_loop_editing_per_recruitment %>% 
+          mutate(across(c(mean, se), ~ signif(.x, 2))), 
+          "../tables/fig4a_loop_plot_data.csv")
+
+cat("Figure 4A generation complete!\n")

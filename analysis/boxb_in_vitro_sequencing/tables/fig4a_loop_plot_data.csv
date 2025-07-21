@@ -1,0 +1,9 @@
+tada_type,tada_conc,edit_type,insert_type,mean,se
+lambdaN,250nM,frac_1edit,mut,3.8,0.59
+lambdaN,250nM,frac_1edit,wt,2.2,0.48
+lambdaN,250nM,frac_2edit,mut,1.2,0.46
+lambdaN,250nM,frac_2edit,wt,0.33,0.092
+tada_only,250nM,frac_1edit,mut,11,1.1
+tada_only,250nM,frac_1edit,wt,7.7,1.2
+tada_only,250nM,frac_2edit,mut,7.3,1.5
+tada_only,250nM,frac_2edit,wt,6.8,1.9
