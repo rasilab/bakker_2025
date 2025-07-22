@@ -42,7 +42,7 @@ editing_per_loop_variant <- target_data %>%
   filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p4", "i79_p8")) %>%
   filter(umi_counts > 200) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         fraction_edited = 1 - fraction_num_0_c) %>%
   select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
   left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
 
@@ -96,7 +96,7 @@ ggsave("../figures/fig3b.pdf", figure_3b, height = 1.6, width = 1.8, units = "in
 mean_editing_per_loop_variant <- target_data %>%
   filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p2", "i79_p8")) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         fraction_edited = 1 - fraction_num_0_c) %>%
   select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
   group_by(tada_type, tada_conc, variable_subpos, insert) %>%
   summarize(mean_fraction_edited = mean(fraction_edited),
@@ -232,7 +232,7 @@ mean_editing_per_stem_variant <- target_data %>%
          sample_id %in% c("i79_p3", "i79_p5", "i79_p6", "i79_p10", "i79_p20", "i79_p2", "i79_p4", "i79_p8", "i79_p7")) %>%
   filter(variable_subpos %in% c("1_3", "4_6", "14_16", "17_19")) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         fraction_edited = 1 - fraction_num_0_c) %>%
   select(tada_type, tada_conc, condition, variable_subpos, insert, fraction_edited) %>%
   left_join(hairpin_annotations, by = c("variable_subpos", "insert")) %>%
   filter(!is.na(free_energy)) %>%
