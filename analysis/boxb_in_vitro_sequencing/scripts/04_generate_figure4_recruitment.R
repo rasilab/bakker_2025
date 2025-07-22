@@ -131,10 +131,10 @@ figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1,
                        labels = c("Recorder", "Loop"), label_size = 6)
 
 # Save PNG first to check proportions
-ggsave("../figures/fig4a.png", figure_4a, width = 4, height = 8, units = "in", dpi = 300)
+ggsave("../figures/fig4a.png", figure_4a, width = 5.4, height = 2, units = "in", dpi = 300)
 
 # Save PDF after checking proportions
-ggsave("../figures/fig4a.pdf", figure_4a, width = 4, height = 8, units = "in")
+ggsave("../figures/fig4a.pdf", figure_4a, width = 5.4, height = 2, units = "in")
 
 # Save summary data
 write_csv(mean_editing_per_recruitment_recorder %>% 
