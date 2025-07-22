@@ -59,7 +59,7 @@ fold_change_recorder_df <- mean_editing_per_recruitment_recorder %>%
   select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
   pivot_wider(names_from = insert_type, values_from = mean) %>%
   mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
-         y.position = pmax(wt, mut) + 6)
+         y.position = pmax(wt, mut) + 8)
 
 stat_data_recorder <- target_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
@@ -131,10 +131,10 @@ figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1,
                        labels = c("Recorder", "Loop"), label_size = 6)
 
 # Save PNG first to check proportions
-ggsave("../figures/fig4a.png", figure_4a, width = 5.4, height = 2, units = "in", dpi = 300)
+ggsave("../figures/fig4a.png", figure_4a, width = 4.5, height = 2, units = "in", dpi = 300)
 
 # Save PDF after checking proportions
-ggsave("../figures/fig4a.pdf", figure_4a, width = 5.4, height = 2, units = "in")
+ggsave("../figures/fig4a.pdf", figure_4a, width = 4.5, height = 2, units = "in")
 
 # Save summary data
 write_csv(mean_editing_per_recruitment_recorder %>% 
