@@ -45,7 +45,7 @@ cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2",
 mean_editing_per_recruitment_recorder <- target_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
          sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
-         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+         tada_type %in% c("tada_only", "lambdaN", "gfpnb", "pAG"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, 
          frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
@@ -64,7 +64,7 @@ fold_change_recorder_df <- mean_editing_per_recruitment_recorder %>%
 stat_data_recorder <- target_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
          sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
-         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+         tada_type %in% c("tada_only", "lambdaN", "gfpnb", "pAG"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, 
          frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
@@ -88,7 +88,7 @@ p_recorder_recruitment <- mean_editing_per_recruitment_recorder %>%
   geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
-            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors,
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
@@ -106,7 +106,7 @@ p_recorder_recruitment <- mean_editing_per_recruitment_recorder %>%
 mean_loop_editing_per_recruitment <- loop_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
          sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
-         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
+         tada_type %in% c("tada_only", "lambdaN", "gfpnb", "pAG"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, frac_2edit = (num_2_c + num_3_c) / umi_counts) %>%
   pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
@@ -120,7 +120,7 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
-            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors, name = NULL) +
   labs(x = NULL, y = "% Edited RNA") +
@@ -130,7 +130,11 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
 figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1, 
                        labels = c("Recorder", "Loop"), label_size = 6)
 
-ggsave("../figures/fig4a.pdf", figure_4a, width = 3, height = 6, units = "in")
+# Save PNG first to check proportions
+ggsave("../figures/fig4a.png", figure_4a, width = 4, height = 8, units = "in", dpi = 300)
+
+# Save PDF after checking proportions
+ggsave("../figures/fig4a.pdf", figure_4a, width = 4, height = 8, units = "in")
 
 # Save summary data
 write_csv(mean_editing_per_recruitment_recorder %>% 
