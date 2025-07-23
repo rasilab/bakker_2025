@@ -102,7 +102,9 @@ p_concentration <- mean_editing_per_concentration %>%
   geom_text(data = fold_change_df, aes(x = edit_type, y = y.position, label = label),
             inherit.aes = FALSE, size = 2.2)
 
-ggsave("../figures/fig2b_recorder.pdf", width = 3, height = 3, units = "in")
+cairo_pdf("../figures/fig2b_recorder.pdf", width = 3, height = 3)
+print(p_concentration)
+dev.off()
 
 # Figure 2B: Time Course Analysis
 mean_editing_per_time <- target_data %>%
@@ -163,7 +165,9 @@ p_time <- mean_editing_per_time %>%
   geom_text(data = fold_change_time_df, aes(x = edit_type, y = y.position, label = label),
             inherit.aes = FALSE, size = 2.2)
 
-ggsave("../figures/fig2b_recorder_time.pdf", width = 4.2, height = 1.125, units = "in")
+cairo_pdf("../figures/fig2b_recorder_time.pdf", width = 4.2, height = 1.125)
+print(p_time)
+dev.off()
 
 # Figure 2B: Loop Region Analysis
 mean_loop_editing_per_concentration <- loop_data %>%
@@ -188,7 +192,9 @@ p_loop <- mean_loop_editing_per_concentration %>%
   labs(x = NULL, y = "% Edited RNA") +
   theme_figure
 
-ggsave("../figures/fig2b_loop.pdf", width = 3, height = 3, units = "in")
+cairo_pdf("../figures/fig2b_loop.pdf", width = 3, height = 3)
+print(p_loop)
+dev.off()
 
 # Loop Concentration Dependence
 p_loop_concentration <- mean_loop_editing_per_concentration %>%
@@ -211,7 +217,9 @@ p_loop_concentration <- mean_loop_editing_per_concentration %>%
   labs(y = "% Edited RNA") +
   theme_figure
 
-ggsave("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2, units = "in")
+cairo_pdf("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2)
+print(p_loop_concentration)
+dev.off()
 
 # Figure 2C: Distance Dependence
 plot_data <- target_data %>%
@@ -237,7 +245,9 @@ p_distance <- plot_data %>%
   theme(axis.title = element_text(size = 8), axis.text = element_text(size = 8),
         axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2c.pdf", height = 1.25, width = 4, units = "in")
+cairo_pdf("../figures/fig2c.pdf", width = 4, height = 1.25)
+print(p_distance)
+dev.off()
 
 # Figure 2D: Position Context Analysis
 position_labs <- c("7" = "UAG",
@@ -284,7 +294,9 @@ figure_2d <- individual_a_editing_context_constant %>%
   theme_figure +
   theme(axis.line = element_line(color = "grey"))
 
-ggsave("../figures/fig2d.pdf", width = 3, height = 1.5, units = "in")
+cairo_pdf("../figures/fig2d.pdf", width = 3, height = 1.5)
+print(figure_2d)
+dev.off()
 
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
@@ -382,7 +394,9 @@ figure_2e <- individual_a_editing_context_variable %>%
     strip.text.x = element_text(size = 6)
   )
 
-ggsave("../figures/fig2e.pdf", figure_2e, width = 4, height = 1.125, units = "in")
+cairo_pdf("../figures/fig2e.pdf", width = 4, height = 1.125)
+print(figure_2e)
+dev.off()
 
 # Save Figure 2E plot data
 write_csv(individual_a_editing_context_variable %>% 
@@ -397,6 +411,8 @@ combined_2d_2e <- plot_grid(
   align = "hv"
 )
 
-ggsave("../figures/figure_2d_2e.pdf", combined_2d_2e, height = 2.25, width = 3.25, units = "in")
+cairo_pdf("../figures/figure_2d_2e.pdf", width = 3.25, height = 2.25)
+print(combined_2d_2e)
+dev.off()
 
 cat("Figure 2 generation complete!\n")

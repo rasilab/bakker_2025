@@ -88,7 +88,9 @@ figure_3b <- editing_per_loop_variant %>%
   ) +
   theme_figure
 
-ggsave("../figures/fig3b.pdf", figure_3b, height = 1.6, width = 1.8, units = "in")
+cairo_pdf("../figures/fig3b.pdf", width = 1.8, height = 1.6)
+print(figure_3b)
+dev.off()
 
 # Figure 3C-3F: Loop Variant Heatmaps
 mean_editing_per_loop_variant <- target_data %>%
@@ -218,7 +220,9 @@ bottom_row <- plot_grid(figure_3e_lower, figure_3f_lower, ncol = 2)
 plots_3c_3d <- plot_grid(top_row, bottom_row, ncol = 1, rel_heights = c(1, 0.5))
 figure_3c_3f <- plot_grid(plots_3c_3d, shared_legend, rel_widths = c(1, 0.25))
 
-ggsave("../figures/fig3c_3f.pdf", figure_3c_3f, height = 1.6, width = 2.5, units = "in")
+cairo_pdf("../figures/fig3c_3f.pdf", width = 2.5, height = 1.6)
+print(figure_3c_3f)
+dev.off()
 
 # Figure 3I-3J: Stem Stability Analysis
 mean_editing_per_stem_variant <- target_data %>%
@@ -270,7 +274,9 @@ figure_3j <- mean_editing_per_stem_variant %>%
 # Combine stem analysis figures
 figure_3i_3j <- plot_grid(figure_3i, figure_3j, ncol = 1, rel_heights = c(1.25, 2))
 
-ggsave("../figures/fig3i_3j.pdf", figure_3i_3j, height = 3.25, width = 2.25, units = "in")
+cairo_pdf("../figures/fig3i_3j.pdf", width = 2.25, height = 3.25)
+print(figure_3i_3j)
+dev.off()
 
 # Save summary data
 write_csv(editing_per_loop_variant %>% 
