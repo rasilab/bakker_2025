@@ -1,8 +1,16 @@
 tada_type,tada_conc,edit_type,insert_type,mean,se
+gfpnb,250nM,frac_1edit,mut,15,1.1
+gfpnb,250nM,frac_1edit,wt,21,1.1
+gfpnb,250nM,frac_2edit,mut,9.2,2
+gfpnb,250nM,frac_2edit,wt,35,3.1
 lambdaN,250nM,frac_1edit,mut,9.3,0.82
 lambdaN,250nM,frac_1edit,wt,17,1.3
 lambdaN,250nM,frac_2edit,mut,4.1,0.77
 lambdaN,250nM,frac_2edit,wt,16,2.3
+pAG,250nM,frac_1edit,mut,14,0.92
+pAG,250nM,frac_1edit,wt,15,1.1
+pAG,250nM,frac_2edit,mut,20,2.3
+pAG,250nM,frac_2edit,wt,45,3
 tada_only,250nM,frac_1edit,mut,16,0.7
 tada_only,250nM,frac_1edit,wt,17,0.66
 tada_only,250nM,frac_2edit,mut,23,2

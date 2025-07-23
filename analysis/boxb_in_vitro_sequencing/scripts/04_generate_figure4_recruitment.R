@@ -89,7 +89,7 @@ p_recorder_recruitment <- mean_editing_per_recruitment_recorder %>%
   geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
-            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors,
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
@@ -152,7 +152,7 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
-            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
+            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
   scale_fill_manual(values = bar_colors,
                     labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
@@ -181,7 +181,7 @@ p_loop_concentration_recruitment <- mean_loop_editing_per_recruitment %>%
                      breaks = c(0.1, 0.5, 2.5), labels = c("0.1", "0.5", "2.5"),
                      trans = "log10") +
   scale_color_manual(values = cbPalette,
-                     labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"), name = NULL) +
+                     labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"), name = NULL) +
   scale_shape_manual(values = c("wt" = 16, "mut" = 17),
                      labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
   labs(y = "% Edited RNA") +
@@ -231,7 +231,7 @@ figure_4d <- editing_per_loop_variant_recruitment %>%
   geom_violin(alpha = 0.3) +
   geom_boxplot(width = 0.2, fill = "white", alpha = 0.3, color = "black", outlier.shape = NA) +
   facet_wrap(~ tada_type, ncol = 2, 
-             labeller = labeller(tada_type = c("gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
+             labeller = labeller(tada_type = c("gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
   scale_fill_manual(values = cbPalette, guide = "none") +
   scale_x_discrete(labels = c("Not GNRNA", "GNRNA")) +
   labs(x = "BoxB Loop Sequence", y = "% Edited RNA") +
@@ -245,6 +245,121 @@ figure_4d <- editing_per_loop_variant_recruitment %>%
 
 cairo_pdf("../figures/fig4d.pdf", width = 3, height = 1.6)
 print(figure_4d)
+dev.off()
+
+# Figure 4E: Loop Variant Heatmaps for gfpnb and pAG
+mean_editing_per_loop_variant_recruitment <- target_data %>%
+  filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p2", "i79_p8")) %>%
+  filter(tada_type %in% c("gfpnb", "pAG"), tada_conc == "250nM") %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
+  group_by(tada_type, tada_conc, variable_subpos, insert) %>%
+  summarize(mean_fraction_edited = mean(fraction_edited),
+            se_fraction_edited = sd(fraction_edited) / sqrt(n()),
+            .groups = "drop") %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
+
+# Process loop data for heatmaps
+loop_data_heatmap_recruitment <- mean_editing_per_loop_variant_recruitment %>%
+  filter(variable_subpos == "7_10") %>%
+  mutate(boxb_7 = str_sub(insert, 4, 4),
+         boxb_8 = str_sub(insert, 3, 3),
+         boxb_9 = str_sub(insert, 2, 2),
+         boxb_10 = str_sub(insert, 1, 1),
+         boxb_11 = "C",
+         boxb_12 = "T",
+         boxb_13 = "T")
+
+mean_editing_per_loop_variant_recruitment <- mean_editing_per_loop_variant_recruitment %>%
+  filter(variable_subpos == "10_13") %>%
+  mutate(boxb_7 = "A",
+         boxb_8 = "C",
+         boxb_9 = "T",
+         boxb_10 = str_sub(insert, 4, 4),
+         boxb_11 = str_sub(insert, 3, 3),
+         boxb_12 = str_sub(insert, 2, 2),
+         boxb_13 = str_sub(insert, 1, 1)) %>%
+  bind_rows(loop_data_heatmap_recruitment) %>%
+  mutate(across(c(boxb_7, boxb_8, boxb_9, boxb_10, boxb_11, boxb_12, boxb_13), ~ case_when(
+    .x == "A" ~ "T",
+    .x == "C" ~ "G", 
+    .x == "G" ~ "C",
+    .x == "T" ~ "A"
+  ), .names = "{col}_rc"))
+
+# Figure 4E: Combined heatmap with facets for each enzyme
+figure_4e_data <- mean_editing_per_loop_variant_recruitment %>%
+  filter(boxb_7 == "A" & boxb_13 == "T", variable_subpos == "7_10") %>%
+  group_by(tada_type, boxb_10_rc, boxb_8_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop")
+
+figure_4e <- figure_4e_data %>%
+  ggplot(aes(x = boxb_10_rc, y = boxb_8_rc, fill = mean_percent)) +
+  geom_tile() +
+  facet_wrap(~ tada_type, ncol = 2, 
+             labeller = labeller(tada_type = c("gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"),
+    na.value = "red"
+  ) +
+  labs(y = "Position 8", x = "Position 10") +
+  theme_figure +
+  theme(
+    axis.line = element_blank(),
+    legend.position = "right"
+  )
+
+cairo_pdf("../figures/fig4e.pdf", width = 3, height = 1.6)
+print(figure_4e)
+dev.off()
+
+# Figure 4F: Stem Stability Analysis for gfpnb and pAG
+mean_editing_per_stem_variant_recruitment <- target_data %>%
+  filter(variable_type == "boxb", 
+         sample_id %in% c("i79_p3", "i79_p5", "i79_p6", "i79_p10", "i79_p20", "i79_p2", "i79_p4", "i79_p8", "i79_p7")) %>%
+  filter(variable_subpos %in% c("1_3", "4_6", "14_16", "17_19"), 
+         tada_type %in% c("gfpnb", "pAG"), tada_conc == "250nM") %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  select(tada_type, tada_conc, condition, variable_subpos, insert, fraction_edited) %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert")) %>%
+  filter(!is.na(free_energy)) %>%
+  mutate(energy_bins = ntile(free_energy, 5)) %>%
+  group_by(tada_type, tada_conc, condition, variable_subpos, insert) %>%
+  summarize(mean_fraction_edited = mean(fraction_edited, na.rm = TRUE),
+            free_energy = first(free_energy),
+            energy_bins = first(energy_bins),
+            .groups = "drop")
+
+# Figure 4F: Energy bins vs editing with facets for each enzyme
+figure_4f <- mean_editing_per_stem_variant_recruitment %>%
+  filter(condition == "37_2hr") %>%
+  ggplot(aes(x = as_factor(energy_bins), y = mean_fraction_edited * 100, 
+             fill = factor(tada_type))) +
+  geom_boxplot(width = 0.6, color = "black", outlier.shape = NA) +
+  facet_wrap(~ tada_type, ncol = 2, 
+             labeller = labeller(tada_type = c("gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
+  scale_x_discrete(labels = c("0-20%\n-14.5-8.6", "21-40%\n-8.7-6.0", "41-60%\n-6.1-5.2", 
+                              "61-80%\n-5.3-3.4", "81-100%\n-3.3-0.3")) +
+  scale_fill_manual(values = cbPalette, guide = "none") +
+  labs(x = "Free Energy Percentile\n(Interval in kJ/mol)", y = "% Edited RNA") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.signif",
+    comparisons = list(c("1", "2"), c("2", "3"), c("3", "4"), c("4", "5")),
+    size = 2
+  ) +
+  theme_figure +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
+
+cairo_pdf("../figures/fig4f.pdf", width = 3, height = 2.5)
+print(figure_4f)
 dev.off()
 
 # Combine recorder and loop analysis
@@ -272,5 +387,16 @@ write_csv(editing_per_loop_variant_recruitment %>%
           mutate(fraction_edited = signif(fraction_edited, 2)) %>%
           select(tada_type, variable_subpos, insert, gnra, fraction_edited), 
           "../tables/fig4d_plot_data.csv")
+
+write_csv(figure_4e_data %>% 
+          mutate(mean_percent = signif(mean_percent, 2)), 
+          "../tables/fig4e_plot_data.csv")
+
+write_csv(mean_editing_per_stem_variant_recruitment %>% 
+          filter(condition == "37_2hr") %>%
+          mutate(mean_fraction_edited = signif(mean_fraction_edited, 2),
+                 free_energy = signif(free_energy, 2)) %>%
+          select(tada_type, condition, variable_subpos, insert, energy_bins, free_energy, mean_fraction_edited), 
+          "../tables/fig4f_plot_data.csv")
 
 cat("Figure 4A generation complete!\n")
