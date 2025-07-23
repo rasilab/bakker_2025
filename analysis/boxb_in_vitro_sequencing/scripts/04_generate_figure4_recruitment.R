@@ -186,10 +186,6 @@ p_loop_concentration_recruitment <- mean_loop_editing_per_recruitment %>%
   labs(y = "% Edited RNA") +
   theme_figure
 
-cairo_pdf("../figures/fig4a_loop.pdf", width = 4.5, height = 2)
-print(p_loop_recruitment)
-dev.off()
-
 cairo_pdf("../figures/fig4a_loop_concentration.pdf", width = 3, height = 2)
 print(p_loop_concentration_recruitment)
 dev.off()
