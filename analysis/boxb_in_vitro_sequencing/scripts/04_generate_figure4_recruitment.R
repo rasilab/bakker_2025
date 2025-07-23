@@ -114,6 +114,32 @@ mean_loop_editing_per_recruitment <- loop_data %>%
   summarize(mean = 100 * mean(fraction_edited), 
             se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
 
+# Calculate fold change and statistical tests for loop
+fold_change_loop_df <- mean_loop_editing_per_recruitment %>%
+  select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
+  pivot_wider(names_from = insert_type, values_from = mean) %>%
+  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
+         y.position = pmax(wt, mut) + 8)
+
+stat_data_loop <- loop_data %>%
+  filter(variable_type == "boxb", g_depleted == "no", 
+         sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p8"),
+         tada_type %in% c("tada_only", "lambdaN", "gfpnb", "pAG"), condition == "37_2hr") %>%
+  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+  mutate(frac_1edit = num_1_c / umi_counts, frac_2edit = (num_2_c + num_3_c) / umi_counts) %>%
+  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+  group_by(tada_type, tada_conc, edit_type) %>%
+  do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
+  ungroup() %>%
+  mutate(p_adj = p.adjust(p.value, method = "BH"),
+         significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
+                                 p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
+  left_join(mean_loop_editing_per_recruitment %>% 
+            group_by(tada_type, tada_conc, edit_type) %>% 
+            summarize(y.position = max(mean) + 3, .groups = "drop"), 
+            by = c("tada_type", "tada_conc", "edit_type")) %>%
+  mutate(group1 = "mut", group2 = "wt", label = significance)
+
 p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
             fill = paste(edit_type, insert_type, sep = "_"))) +
@@ -127,7 +153,12 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
                               "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
                     name = NULL) +
   labs(x = NULL, y = "% Edited RNA") +
-  theme_figure
+  theme_figure +
+  stat_pvalue_manual(data = stat_data_loop %>% filter(significance != "ns"),
+                    x = "edit_type", y.position = "y.position", 
+                    tip.length = 0.01, size = 2, inherit.aes = FALSE) +
+  geom_text(data = fold_change_loop_df, aes(x = edit_type, y = y.position, label = label),
+            inherit.aes = FALSE, size = 2.2)
 
 # Loop Concentration Dependence for recruitment samples
 p_loop_concentration_recruitment <- mean_loop_editing_per_recruitment %>%
