@@ -126,6 +126,31 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   labs(x = NULL, y = "% Edited RNA") +
   theme_figure
 
+# Loop Concentration Dependence for recruitment samples
+p_loop_concentration_recruitment <- mean_loop_editing_per_recruitment %>%
+  group_by(tada_type, tada_conc, insert_type) %>%
+  summarize(mean_1plus = sum(mean), se_1plus = sqrt(sum(se^2)), .groups = "drop") %>%
+  mutate(tada_conc_numeric = as.numeric(str_extract(tada_conc, "\\d+\\.?\\d*"))) %>%
+  ggplot(aes(x = tada_conc_numeric, y = mean_1plus, color = tada_type, 
+             shape = insert_type, group = interaction(tada_type, insert_type))) +
+  geom_point(size = 1.5, stroke = 0.3) +
+  geom_line(linewidth = 0.4) +
+  geom_errorbar(aes(ymin = mean_1plus - se_1plus, ymax = mean_1plus + se_1plus), 
+                width = 0.02, linewidth = 0.3) +
+  scale_x_continuous(name = "TadA concentration (μM)", 
+                     breaks = c(0.1, 0.5, 2.5), labels = c("0.1", "0.5", "2.5"),
+                     trans = "log10") +
+  scale_color_manual(values = cbPalette,
+                     labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"), name = NULL) +
+  scale_shape_manual(values = c("wt" = 16, "mut" = 17),
+                     labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
+  labs(y = "% Edited RNA") +
+  theme_figure
+
+cairo_pdf("../figures/fig4a_loop_concentration.pdf", width = 3, height = 2)
+print(p_loop_concentration_recruitment)
+dev.off()
+
 # Combine recorder and loop analysis
 figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1, 
                        labels = c("Recorder", "Loop"), label_size = 6)
@@ -133,8 +158,10 @@ figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1,
 # Save PNG first to check proportions
 ggsave("../figures/fig4a.png", figure_4a, width = 4.5, height = 2, units = "in", dpi = 300)
 
-# Save PDF after checking proportions
-ggsave("../figures/fig4a.pdf", figure_4a, width = 4.5, height = 2, units = "in")
+# Save PDF using cairo_pdf for better unicode rendering
+cairo_pdf("../figures/fig4a.pdf", width = 4.5, height = 2)
+print(figure_4a)
+dev.off()
 
 # Save summary data
 write_csv(mean_editing_per_recruitment_recorder %>% 
