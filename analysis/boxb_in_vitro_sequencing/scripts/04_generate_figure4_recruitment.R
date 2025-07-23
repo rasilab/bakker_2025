@@ -288,13 +288,13 @@ mean_editing_per_loop_variant_recruitment <- mean_editing_per_loop_variant_recru
     .x == "T" ~ "A"
   ), .names = "{col}_rc"))
 
-# Figure 4E: Combined heatmap with facets for each enzyme
-figure_4e_data <- mean_editing_per_loop_variant_recruitment %>%
+# Figure 4E: Position 8 vs 10 heatmaps
+figure_4e_upper_data <- mean_editing_per_loop_variant_recruitment %>%
   filter(boxb_7 == "A" & boxb_13 == "T", variable_subpos == "7_10") %>%
   group_by(tada_type, boxb_10_rc, boxb_8_rc) %>%
   summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop")
 
-figure_4e <- figure_4e_data %>%
+figure_4e_upper <- figure_4e_upper_data %>%
   ggplot(aes(x = boxb_10_rc, y = boxb_8_rc, fill = mean_percent)) +
   geom_tile() +
   facet_wrap(~ tada_type, ncol = 2, 
@@ -309,10 +309,40 @@ figure_4e <- figure_4e_data %>%
   theme_figure +
   theme(
     axis.line = element_blank(),
-    legend.position = "right"
+    legend.position = "none"
   )
 
-cairo_pdf("../figures/fig4e.pdf", width = 3, height = 1.6)
+# Figure 4E: Position 7 vs 13 heatmaps (for GNRA variants)
+figure_4e_lower_data <- mean_editing_per_loop_variant_recruitment %>%
+  filter(boxb_8 == "C" & boxb_9 == "T" & boxb_10 %in% c("T", "C"), 
+         variable_subpos == "7_10") %>%
+  group_by(tada_type, boxb_7_rc, boxb_13_rc) %>%
+  summarize(mean_percent = mean(mean_fraction_edited) * 100, .groups = "drop")
+
+figure_4e_lower <- figure_4e_lower_data %>%
+  ggplot(aes(x = boxb_7_rc, y = boxb_13_rc, fill = mean_percent)) +
+  geom_tile() +
+  facet_wrap(~ tada_type, ncol = 2, 
+             labeller = labeller(tada_type = c("gfpnb" = "TadA-GFPNb", "pAG" = "pAG-TadA"))) +
+  scale_fill_gradient(
+    name = "% Edited\nRNA",
+    low = "white", high = "black",
+    guide = "none"
+  ) +
+  labs(x = "Position 7", y = "Position 13") +
+  theme_figure +
+  theme(axis.line = element_blank())
+
+# Extract shared legend
+shared_legend_4e <- get_legend(
+  figure_4e_upper + theme(legend.position = "right")
+)
+
+# Combine upper and lower heatmaps
+figure_4e_combined <- plot_grid(figure_4e_upper, figure_4e_lower, ncol = 1, rel_heights = c(1, 1))
+figure_4e <- plot_grid(figure_4e_combined, shared_legend_4e, rel_widths = c(1, 0.25))
+
+cairo_pdf("../figures/fig4e.pdf", width = 3, height = 2.5)
 print(figure_4e)
 dev.off()
 
@@ -388,7 +418,10 @@ write_csv(editing_per_loop_variant_recruitment %>%
           select(tada_type, variable_subpos, insert, gnra, fraction_edited), 
           "../tables/fig4d_plot_data.csv")
 
-write_csv(figure_4e_data %>% 
+write_csv(bind_rows(
+          figure_4e_upper_data %>% mutate(comparison = "pos_8_vs_10"),
+          figure_4e_lower_data %>% mutate(comparison = "pos_7_vs_13")
+          ) %>% 
           mutate(mean_percent = signif(mean_percent, 2)), 
           "../tables/fig4e_plot_data.csv")
 
