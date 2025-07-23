@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
 loop_data <- read_csv("../tables/loop_data_processed.csv", show_col_types = FALSE)
 boxb_wt_mut_stems <- read_csv("../tables/boxb_wt_mut_stems.csv", show_col_types = FALSE)
+hairpin_annotations <- read_csv("../tables/hairpin_annotations.csv", show_col_types = FALSE)
 
 # Read constants
 constants_df <- read_csv("../tables/constants_processed.csv", show_col_types = FALSE)
@@ -190,6 +191,62 @@ cairo_pdf("../figures/fig4a_loop_concentration.pdf", width = 3, height = 2)
 print(p_loop_concentration_recruitment)
 dev.off()
 
+# Figure 4D: GNRA Analysis for gfpnb and pAG
+editing_per_loop_variant_recruitment <- target_data %>%
+  filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p4", "i79_p8")) %>%
+  filter(umi_counts > 200, tada_type %in% c("gfpnb", "pAG"), tada_conc == "250nM") %>%
+  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+  select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
+  left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
+
+# Process loop data for 7_10 region
+loop_data_tmp_recruitment <- editing_per_loop_variant_recruitment %>%
+  filter(variable_subpos == "7_10") %>%
+  mutate(boxb_7 = str_sub(insert, 4, 4),
+         boxb_8 = str_sub(insert, 3, 3),
+         boxb_9 = str_sub(insert, 2, 2),
+         boxb_10 = str_sub(insert, 1, 1),
+         boxb_11 = "C",
+         boxb_12 = "T",
+         boxb_13 = "T")
+
+# Process loop data for 10_13 region and combine
+editing_per_loop_variant_recruitment <- editing_per_loop_variant_recruitment %>%
+  filter(variable_subpos == "10_13") %>%
+  mutate(boxb_7 = "A",
+         boxb_8 = "C",
+         boxb_9 = "T",
+         boxb_10 = str_sub(insert, 4, 4),
+         boxb_11 = str_sub(insert, 3, 3),
+         boxb_12 = str_sub(insert, 2, 2),
+         boxb_13 = str_sub(insert, 1, 1)) %>%
+  bind_rows(loop_data_tmp_recruitment) %>%
+  mutate(gnra = boxb_8 == "C" & (boxb_10 == "T" | boxb_10 == "C") & boxb_12 == "T") %>%
+  filter(boxb_7 == "A" & boxb_13 == "T")
+
+figure_4d <- editing_per_loop_variant_recruitment %>%
+  ggplot(aes(x = gnra, y = fraction_edited * 100, fill = gnra)) +
+  geom_point(color = "grey50") +
+  geom_violin(alpha = 0.3) +
+  geom_boxplot(width = 0.2, fill = "white", alpha = 0.3, color = "black", outlier.shape = NA) +
+  facet_wrap(~ tada_type, ncol = 2, 
+             labeller = labeller(tada_type = c("gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
+  scale_fill_manual(values = cbPalette, guide = "none") +
+  scale_x_discrete(labels = c("Not GNRNA", "GNRNA")) +
+  labs(x = "BoxB Loop Sequence", y = "% Edited RNA") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format",
+    comparisons = list(c("TRUE", "FALSE")),
+    size = 2
+  ) +
+  theme_figure
+
+cairo_pdf("../figures/fig4d.pdf", width = 3, height = 1.6)
+print(figure_4d)
+dev.off()
+
 # Combine recorder and loop analysis
 figure_4a <- plot_grid(p_recorder_recruitment, p_loop_recruitment, ncol = 1, 
                        labels = c("Recorder", "Loop"), label_size = 6)
@@ -210,5 +267,10 @@ write_csv(mean_editing_per_recruitment_recorder %>%
 write_csv(mean_loop_editing_per_recruitment %>% 
           mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig4a_loop_plot_data.csv")
+
+write_csv(editing_per_loop_variant_recruitment %>% 
+          mutate(fraction_edited = signif(fraction_edited, 2)) %>%
+          select(tada_type, variable_subpos, insert, gnra, fraction_edited), 
+          "../tables/fig4d_plot_data.csv")
 
 cat("Figure 4A generation complete!\n")
