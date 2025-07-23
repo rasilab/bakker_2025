@@ -114,12 +114,19 @@ mean_loop_editing_per_recruitment <- loop_data %>%
   summarize(mean = 100 * mean(fraction_edited), 
             se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
 
+# Calculate max heights for proper positioning
+max_heights_loop <- mean_loop_editing_per_recruitment %>%
+  mutate(total_height = mean + se) %>%
+  group_by(tada_type, tada_conc, edit_type) %>%
+  summarize(max_height = max(total_height), .groups = "drop")
+
 # Calculate fold change and statistical tests for loop
 fold_change_loop_df <- mean_loop_editing_per_recruitment %>%
   select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
   pivot_wider(names_from = insert_type, values_from = mean) %>%
-  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
-         y.position = pmax(wt, mut) + 8)
+  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x")) %>%
+  left_join(max_heights_loop, by = c("tada_type", "tada_conc", "edit_type")) %>%
+  mutate(y.position = max_height + 8)
 
 stat_data_loop <- loop_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
@@ -134,11 +141,9 @@ stat_data_loop <- loop_data %>%
   mutate(p_adj = p.adjust(p.value, method = "BH"),
          significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
                                  p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
-  left_join(mean_loop_editing_per_recruitment %>% 
-            group_by(tada_type, tada_conc, edit_type) %>% 
-            summarize(y.position = max(mean) + 3, .groups = "drop"), 
-            by = c("tada_type", "tada_conc", "edit_type")) %>%
-  mutate(group1 = "mut", group2 = "wt", label = significance)
+  left_join(max_heights_loop, by = c("tada_type", "tada_conc", "edit_type")) %>%
+  mutate(y.position = max_height + 4,
+         group1 = "mut", group2 = "wt", label = significance)
 
 p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
