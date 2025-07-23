@@ -122,7 +122,10 @@ p_loop_recruitment <- mean_loop_editing_per_recruitment %>%
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
             labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA", "gfpnb" = "GFP-NB", "pAG" = "pAG"))) +
   scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
-  scale_fill_manual(values = bar_colors, name = NULL) +
+  scale_fill_manual(values = bar_colors,
+                    labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
+                              "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
+                    name = NULL) +
   labs(x = NULL, y = "% Edited RNA") +
   theme_figure
 
@@ -146,6 +149,10 @@ p_loop_concentration_recruitment <- mean_loop_editing_per_recruitment %>%
                      labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
   labs(y = "% Edited RNA") +
   theme_figure
+
+cairo_pdf("../figures/fig4a_loop.pdf", width = 4.5, height = 2)
+print(p_loop_recruitment)
+dev.off()
 
 cairo_pdf("../figures/fig4a_loop_concentration.pdf", width = 3, height = 2)
 print(p_loop_concentration_recruitment)
