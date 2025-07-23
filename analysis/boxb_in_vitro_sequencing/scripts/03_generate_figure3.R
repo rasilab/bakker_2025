@@ -42,7 +42,7 @@ editing_per_loop_variant <- target_data %>%
   filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p4", "i79_p8")) %>%
   filter(umi_counts > 200) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = 1 - fraction_num_0_c) %>%
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
   left_join(hairpin_annotations, by = c("variable_subpos", "insert"))
 
@@ -79,13 +79,11 @@ figure_3b <- editing_per_loop_variant %>%
   geom_boxplot(width = 0.2, fill = "white", alpha = 0.3, color = "black", outlier.shape = NA) +
   scale_fill_manual(values = cbPalette, guide = "none") +
   scale_x_discrete(labels = c("Not GNRNA", "GNRNA")) +
-  scale_y_continuous(limits = c(0, 35)) +
   labs(x = "BoxB Loop Sequence", y = "% Edited RNA") +
   stat_compare_means(
     method = "wilcox.test",
     label = "p.format",
     comparisons = list(c("TRUE", "FALSE")),
-    label.y = 32,
     size = 2
   ) +
   theme_figure
@@ -96,7 +94,7 @@ ggsave("../figures/fig3b.pdf", figure_3b, height = 1.6, width = 1.8, units = "in
 mean_editing_per_loop_variant <- target_data %>%
   filter(variable_type == "boxb", sample_id %in% c("i79_p3", "i79_p10", "i79_p20", "i79_p2", "i79_p8")) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = 1 - fraction_num_0_c) %>%
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   select(tada_type, tada_conc, variable_subpos, insert, fraction_edited) %>%
   group_by(tada_type, tada_conc, variable_subpos, insert) %>%
   summarize(mean_fraction_edited = mean(fraction_edited),
@@ -143,7 +141,6 @@ figure_3c_upper <- mean_editing_per_loop_variant %>%
   scale_fill_gradient(
     name = "% Edited\nRNA",
     low = "white", high = "black",
-    limits = c(10, 30),
     guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"),
     na.value = "red"
   ) +
@@ -165,7 +162,6 @@ figure_3e_lower <- mean_editing_per_loop_variant %>%
   scale_fill_gradient(
     name = "% Edited\nRNA",
     low = "white", high = "black",
-    limits = c(0, 30),
     guide = "none"
   ) +
   labs(x = "Position 7", y = "Position 13") +
@@ -183,7 +179,6 @@ figure_3d_upper <- mean_editing_per_loop_variant %>%
   scale_fill_gradient(
     name = "% Edited\nRNA",
     low = "white", high = "black",
-    limits = c(10, 30),
     guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"),
     na.value = "red"
   ) +
@@ -205,7 +200,6 @@ figure_3f_lower <- mean_editing_per_loop_variant %>%
   scale_fill_gradient(
     name = "% Edited\nRNA",
     low = "white", high = "black",
-    limits = c(0, 30),
     guide = "none"
   ) +
   labs(x = "Position 13", y = "Position 7") +
@@ -232,7 +226,7 @@ mean_editing_per_stem_variant <- target_data %>%
          sample_id %in% c("i79_p3", "i79_p5", "i79_p6", "i79_p10", "i79_p20", "i79_p2", "i79_p4", "i79_p8", "i79_p7")) %>%
   filter(variable_subpos %in% c("1_3", "4_6", "14_16", "17_19")) %>%
   mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-         fraction_edited = 1 - fraction_num_0_c) %>%
+         fraction_edited = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   select(tada_type, tada_conc, condition, variable_subpos, insert, fraction_edited) %>%
   left_join(hairpin_annotations, by = c("variable_subpos", "insert")) %>%
   filter(!is.na(free_energy)) %>%
@@ -257,7 +251,6 @@ figure_3j <- mean_editing_per_stem_variant %>%
   ggplot(aes(x = as_factor(energy_bins), y = mean_fraction_edited * 100, 
              fill = factor(condition, levels = time_order))) +
   geom_boxplot(width = 0.6, color = "black", outlier.shape = NA) +
-  scale_y_continuous(limits = c(0, 48)) +
   scale_x_discrete(labels = c("0-20%\n-14.5-8.6", "21-40%\n-8.7-6.0", "41-60%\n-6.1-5.2", 
                               "61-80%\n-5.3-3.4", "81-100%\n-3.3-0.3")) +
   scale_fill_manual(values = cbPalette, labels = c("30 min", "1 hr", "2 hr")) +
@@ -266,7 +259,6 @@ figure_3j <- mean_editing_per_stem_variant %>%
     method = "wilcox.test",
     label = "p.signif",
     comparisons = list(c("1", "2"), c("2", "3"), c("3", "4"), c("4", "5")),
-    label.y = c(45, 40, 35, 30),
     size = 2
   ) +
   theme_figure +

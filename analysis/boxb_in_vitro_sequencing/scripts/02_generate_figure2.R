@@ -67,7 +67,7 @@ stat_data <- target_data %>%
          tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, 
-         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
   group_by(tada_type, tada_conc, edit_type) %>%
   do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
@@ -129,7 +129,7 @@ stat_data_time <- target_data %>%
          tada_type %in% c("lambdaN"), tada_conc == "250nM") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, 
-         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
   group_by(tada_type, condition, edit_type) %>%
   do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
@@ -217,7 +217,7 @@ ggsave("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2, units
 plot_data <- target_data %>%
   filter(variable_type == "target", tada_type %in% c("tada_only", "lambdaN"),
          tada_conc == "250nM", condition == "37_2hr") %>%
-  mutate(fraction_2to4edit = (num_1_c + num_3_c + num_4_c) / umi_counts) %>%
+  mutate(fraction_2to4edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   select(tada_type, target_dist, target_pos_to_boxb, fraction_2to4edit) %>%
   group_by(target_pos_to_boxb, target_dist, tada_type) %>%
   summarize(mean = mean(fraction_2to4edit), se = sd(fraction_2to4edit) / sqrt(n()),

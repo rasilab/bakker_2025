@@ -67,7 +67,7 @@ stat_data_recorder <- target_data %>%
          tada_type %in% c("tada_only", "lambdaN", "gfpnb", "pAG"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
   mutate(frac_1edit = num_1_c / umi_counts, 
-         frac_2edit = (num_2_c + num_3_c + num_4_c) / umi_counts) %>%
+         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
   pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
   group_by(tada_type, tada_conc, edit_type) %>%
   do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
