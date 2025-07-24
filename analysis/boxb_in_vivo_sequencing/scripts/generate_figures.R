@@ -27,17 +27,10 @@ target_data <- list.files("../data/summary_stats_combined/", full.names = T, pat
     janitor::clean_names() %>%
     print()
 
-# Check if in vitro data path exists
-in_vitro_path <- "../../boxb_in_vitro_sequencing/data/summary_stats_combined/"
-if(dir.exists(in_vitro_path)) {
-  in_vitro_data <- list.files(in_vitro_path, full.names = T, pattern = ".csv.gz") %>%
-      read_csv(show_col_types = F) %>%
-      janitor::clean_names() %>%
-      print()
-} else {
-  print("In vitro data path not found - creating empty data frame")
-  in_vitro_data <- data.frame()
-}
+in_vitro_data <- list.files("../../boxb_in_vitro_sequencing/data/summary_stats_combined/", full.names = T, pattern = ".csv.gz") %>%
+    read_csv(show_col_types = F) %>%
+    janitor::clean_names() %>%
+    print()
 
 barcode_annotations <- read_csv("../annotations/barcode_annotations.csv", show_col_types = F) %>%
     select(-barcode) %>%
@@ -56,57 +49,36 @@ target_data <- target_data %>%
     left_join(sample_annotations, by = "sample_id") %>%
     print()
 
-# Check if in vitro annotation paths exist
-in_vitro_barcode_path <- "../../boxb_in_vitro_sequencing/annotations/barcode_annotations.csv"
-in_vitro_sample_path <- "../../boxb_in_vitro_sequencing/annotations/sample_info.csv"
+in_vitro_barcode_annotations <- read_csv("../../boxb_in_vitro_sequencing/annotations/barcode_annotations.csv", show_col_types = F) %>%
+    select(-barcode) %>%
+    rename(barcode = reverse_complement) %>%
+    print()
 
-if(file.exists(in_vitro_barcode_path)) {
-  in_vitro_barcode_annotations <- read_csv(in_vitro_barcode_path, show_col_types = F) %>%
-      select(-barcode) %>%
-      rename(barcode = reverse_complement) %>%
-      print()
-} else {
-  print("In vitro barcode annotations not found - creating empty data frame")
-  in_vitro_barcode_annotations <- data.frame()
-}
-
-if(file.exists(in_vitro_sample_path)) {
-  in_vitro_sample_annotations <- read_csv(in_vitro_sample_path, show_col_types = F) %>%
-      print()
-} else {
-  print("In vitro sample annotations not found - creating empty data frame")
-  in_vitro_sample_annotations <- data.frame()
-}
+in_vitro_sample_annotations <- read_csv("../../boxb_in_vitro_sequencing/annotations/sample_info.csv", show_col_types = F) %>%
+    print()
 
 hairpin_annotations <- read_tsv("../annotations/hairpin_annotations.tsv", show_col_types = F) %>%
     rename("insert" = "variable_region") %>%
     print()
 
-# Process in vitro data if available
-if(nrow(in_vitro_data) > 0 && nrow(in_vitro_barcode_annotations) > 0 && nrow(in_vitro_sample_annotations) > 0) {
-  in_vitro_target_data <- in_vitro_data %>%
-      left_join(in_vitro_barcode_annotations, by = "barcode") %>%
-      left_join(in_vitro_sample_annotations, by = "sample_id") %>%
-      print()
+in_vitro_target_data <- in_vitro_data %>%
+    left_join(in_vitro_barcode_annotations, by = "barcode") %>%
+    left_join(in_vitro_sample_annotations, by = "sample_id") %>%
+    print()
 
-  in_vitro_tmp <-in_vitro_target_data %>%
-      filter(variable_type=="boxb") %>%
-      filter(umi_counts>100)%>%
-      mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
-          fraction_edited=1-fraction_num_0_c)%>%
-      select(sample_id,variable_subpos,insert,fraction_edited,tada_type) %>%
-      group_by(sample_id,variable_subpos,insert,tada_type)%>%
-      summarize(across(matches("fraction_"),~mean(.x),.names="mean_{col}"),
-          across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
-          .groups = "drop")%>%
-      select(sample_id,variable_subpos,insert,mean_fraction_edited)%>%
-      pivot_wider(names_from=sample_id,values_from = mean_fraction_edited)%>%
-      print()
-} else {
-  print("In vitro data not available - creating empty data frames")
-  in_vitro_target_data <- data.frame()
-  in_vitro_tmp <- data.frame()
-}
+in_vitro_tmp <-in_vitro_target_data %>%
+    filter(variable_type=="boxb") %>%
+    filter(umi_counts>100)%>%
+    mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}"),
+        fraction_edited=1-fraction_num_0_c)%>%
+    select(sample_id,variable_subpos,insert,fraction_edited,tada_type) %>%
+    group_by(sample_id,variable_subpos,insert,tada_type)%>%
+    summarize(across(matches("fraction_"),~mean(.x),.names="mean_{col}"),
+        across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
+        .groups = "drop")%>%
+    select(sample_id,variable_subpos,insert,mean_fraction_edited)%>%
+    pivot_wider(names_from=sample_id,values_from = mean_fraction_edited)%>%
+    print()
 
 wildtype_boxb_random_inserts <- barcode_annotations  %>%
   filter(str_detect(oligo_name, "boxb_random")) %>%
@@ -175,15 +147,8 @@ mean_editing_per_boxb_variants_wide <- target_data %>%
         across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
         .groups = "drop")%>%
     select(sample_id,variable_subpos,insert,mean_fraction_edited)%>%
-    pivot_wider(names_from=sample_id,values_from = mean_fraction_edited)
-
-# Join with in vitro data if available
-if(nrow(in_vitro_tmp) > 0) {
-  mean_editing_per_boxb_variants_wide <- mean_editing_per_boxb_variants_wide %>%
-    right_join(in_vitro_tmp,by=c("variable_subpos","insert"))
-}
-
-mean_editing_per_boxb_variants_wide <- mean_editing_per_boxb_variants_wide %>%
+    pivot_wider(names_from=sample_id,values_from = mean_fraction_edited)%>%
+    right_join(in_vitro_tmp,by=c("variable_subpos","insert"))%>%
     left_join(hairpin_annotations,by=c("variable_subpos","insert"))%>%
     print()
 
@@ -404,75 +369,65 @@ figure_5c <- individual_a_editing_context_constant  %>%
 ggsave("../figures/context_constant.pdf",height = 2,width = 2.9)
 
 ### 5D
-if("i79_p21" %in% colnames(mean_editing_per_boxb_variants_wide) && "i79_p22" %in% colnames(mean_editing_per_boxb_variants_wide)) {
-  figure_5d <- mean_editing_per_boxb_variants_wide %>%
-      ggplot(aes(x=i79_p21*100,y=i79_p22*100))+
-      geom_point(alpha=0.5)+
-      stat_cor(method = "spearman",label.x=5,label.y=45,size=3)+
-          labs(x = "LN-TadA", y = "GFPNb-TadA"
-           )+
-      theme_classic()+
-      theme(
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 8),
-        strip.text.x = element_text(size=8),
-        strip.background = element_blank(),
-        axis.text.x = element_text(hjust = 0.5)
-      )
+figure_5d <- mean_editing_per_boxb_variants_wide %>%
+    ggplot(aes(x=i79_p21*100,y=i79_p22*100))+
+    geom_point(alpha=0.5)+
+    stat_cor(method = "spearman",label.x=5,label.y=45,size=3)+
+        labs(x = "LN-TadA", y = "GFPNb-TadA"
+         )+
+    theme_classic()+
+    theme(
+      axis.title = element_text(size = 8),
+      axis.text = element_text(size = 8),
+      legend.title = element_text(size = 8),
+      legend.text = element_text(size = 8),
+      strip.text.x = element_text(size=8),
+      strip.background = element_blank(),
+      axis.text.x = element_text(hjust = 0.5)
+    )
 
-  ggsave("../figures/in_vivo_ln_vs_gfpnb.pdf",height = 2.0,width = 2.0)
-} else {
-  print("Skipping Figure 5D - required columns not found in data")
-}
+ggsave("../figures/in_vivo_ln_vs_gfpnb.pdf",height = 2.0,width = 2.0)
 
 ### 5E
-# Check if required columns exist for in vitro vs in vivo comparison
-required_cols_5e <- c("i79_p3", "i79_p21", "i79_p20", "i79_p22")
-if(all(required_cols_5e %in% colnames(mean_editing_per_boxb_variants_wide))) {
-  figure_5e_top <- mean_editing_per_boxb_variants_wide %>%
-      ggplot(aes(x=i79_p3*100,y=i79_p21*100))+
-      geom_point(alpha=0.2)+
-      stat_cor(method = "spearman",label.x=5,label.y=33,size=3)+
-          labs(x = "In vitro", y = "In vivo"
-           )+
-      theme_classic()+
-      theme(
-        plot.title = element_text(size=8),
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 8),
-        strip.text.x = element_text(size=8),
-        strip.background = element_blank(),
-        axis.text.x = element_text(hjust = 0.5)
-      )
+figure_5e_top <- mean_editing_per_boxb_variants_wide %>%
+    ggplot(aes(x=i79_p3*100,y=i79_p21*100))+
+    geom_point(alpha=0.2)+
+    stat_cor(method = "spearman",label.x=5,label.y=33,size=3)+
+        labs(x = "In vitro", y = "In vivo"
+         )+
+    theme_classic()+
+    theme(
+      plot.title = element_text(size=8),
+      axis.title = element_text(size = 8),
+      axis.text = element_text(size = 8),
+      legend.title = element_text(size = 8),
+      legend.text = element_text(size = 8),
+      strip.text.x = element_text(size=8),
+      strip.background = element_blank(),
+      axis.text.x = element_text(hjust = 0.5)
+    )
 
-  figure_5e_bottom <- mean_editing_per_boxb_variants_wide %>%
-      ggplot(aes(x=i79_p20*100,y=i79_p22*100))+
-      geom_point(alpha=0.2)+
-      stat_cor(method = "spearman",label.x=10,label.y=45,size=3)+
-          labs(x = "In vitro", y = "In vivo"
-           )+
-      theme_classic()+
-      theme(
-        plot.title = element_text(size=8),
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 8),
-        strip.text.x = element_text(size=8),
-        strip.background = element_blank(),
-        axis.text.x = element_text(hjust = 0.5)
-      )
+figure_5e_bottom <- mean_editing_per_boxb_variants_wide %>%
+    ggplot(aes(x=i79_p20*100,y=i79_p22*100))+
+    geom_point(alpha=0.2)+
+    stat_cor(method = "spearman",label.x=10,label.y=45,size=3)+
+        labs(x = "In vitro", y = "In vivo"
+         )+
+    theme_classic()+
+    theme(
+      plot.title = element_text(size=8),
+      axis.title = element_text(size = 8),
+      axis.text = element_text(size = 8),
+      legend.title = element_text(size = 8),
+      legend.text = element_text(size = 8),
+      strip.text.x = element_text(size=8),
+      strip.background = element_blank(),
+      axis.text.x = element_text(hjust = 0.5)
+    )
 
-  plot_grid(figure_5e_top,figure_5e_bottom,nrow=1)
+plot_grid(figure_5e_top,figure_5e_bottom,nrow=1)
 
-  ggsave("../figures/in_vivo_vs_in_vitro.pdf",height = 2.0,width = 4)
-} else {
-  print("Skipping Figure 5E - required columns not found in data")
-}
+ggsave("../figures/in_vivo_vs_in_vitro.pdf",height = 2.0,width = 4)
 
 ### 5F
 figure_5f_top <- editing_per_loop_variant %>%
