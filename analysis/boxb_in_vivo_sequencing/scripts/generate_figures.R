@@ -589,7 +589,7 @@ figure_5h <- mean_editing_per_wt_mut_stems %>%
     ) +
     labs(x = "Edit Type", y = "Percent Editing", title = "Wild-type vs Mutant Stem BoxB Editing")
 
-ggsave("../figures/wt_vs_mut_stems_comparison.pdf", height = 3, width = 6)
+ggsave("../figures/wt_vs_mut_stems_comparison.pdf", height = 2, width = 3)
 
 ## Supplementary Figure 4
 
