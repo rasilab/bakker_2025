@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
   library(ggpubr)
   library(RColorBrewer)
   library(cowplot)
+  library(broom)
 })
 
 # Define cbPalette for plots
@@ -89,6 +90,13 @@ wildtype_boxb_random_inserts <- barcode_annotations  %>%
   select(variable_subpos, wt_insert)
 
 print(wildtype_boxb_random_inserts)
+
+# Create boxb wild-type and mutant stems data for comparison analysis
+boxb_wt_mut_stems <- data.frame(
+  variable_subpos = c("1_3", "1_3", "4_6", "4_6", "14_16", "14_16", "17_19", "17_19"),
+  insert_type = c("wt", "mut", "wt", "mut", "wt", "mut", "wt", "mut"),
+  insert = c("CCC", "GGG", "GGG", "CCC", "CCC", "GGG", "GGG", "CCC")
+)
 
 ## Generate Data Tables
 
@@ -306,6 +314,57 @@ mean_editing_per_loop_variant <- stats_per_boxb_insert %>%
 
 write_tsv(mean_editing_per_loop_variant,"../tables/mean_editing_per_loop_variant")
 
+### Wild-type vs Mutant Stem BoxB Analysis (similar to Figure 4A)
+# Calculate editing fractions for recorder and loop regions comparing wt vs mut stems
+mean_editing_per_wt_mut_stems <- target_data %>%
+    filter(variable_type=="boxb") %>%
+    filter(umi_counts>200)%>%
+    inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+    mutate(frac_1edit = num_1_c / umi_counts,
+           frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+    pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+    group_by(enzyme, edit_type, insert_type) %>%
+    summarize(mean = 100 * mean(fraction_edited),
+              se = 100 * sd(fraction_edited) / sqrt(n()),
+              .groups = "drop") %>%
+    print()
+
+# Calculate fold change for wt vs mut comparison
+fold_change_wt_mut_df <- mean_editing_per_wt_mut_stems %>%
+    select(enzyme, edit_type, insert_type, mean) %>%
+    pivot_wider(names_from = insert_type, values_from = mean) %>%
+    mutate(fold_change = wt / mut, 
+           label = paste0(signif(fold_change, 2), "x"),
+           y.position = pmax(wt, mut) + 5) %>%
+    print()
+
+# Statistical tests for wt vs mut comparison
+stat_data_wt_mut <- target_data %>%
+    filter(variable_type=="boxb") %>%
+    filter(umi_counts>200)%>%
+    inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
+    mutate(frac_1edit = num_1_c / umi_counts,
+           frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
+    pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+    group_by(enzyme, edit_type) %>%
+    do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
+    ungroup() %>%
+    mutate(p_adj = p.adjust(p.value, method = "BH"),
+           significance = case_when(p_adj < 0.001 ~ "***", 
+                                   p_adj < 0.01 ~ "**", 
+                                   p_adj < 0.05 ~ "*", 
+                                   TRUE ~ "ns")) %>%
+    left_join(mean_editing_per_wt_mut_stems %>% 
+              group_by(enzyme, edit_type) %>% 
+              summarize(y.position = max(mean) + 3, .groups = "drop"), 
+              by = c("enzyme", "edit_type")) %>%
+    mutate(group1 = "mut", group2 = "wt", label = significance) %>%
+    print()
+
+write_tsv(mean_editing_per_wt_mut_stems,"../tables/mean_editing_per_wt_mut_stems.tsv")
+write_tsv(fold_change_wt_mut_df,"../tables/fold_change_wt_mut_stems.tsv")
+write_tsv(stat_data_wt_mut,"../tables/stat_data_wt_mut_stems.tsv")
+
 ## Figure 5
 
 ### 5B
@@ -490,6 +549,47 @@ figure_5g_top <- mean_editing_stem_variants %>%
          )
 
 ggsave("../figures/stem_stability.pdf",height = 2.5,width = 3)  
+
+### Wild-type vs Mutant Stem BoxB Comparison (Figure 5H)
+# Define colors for wild-type vs mutant comparison
+bar_colors <- c("frac_1edit_mut" = "#cccccc", "frac_1edit_wt" = "#a6dbe5",
+                "frac_2edit_mut" = "#888888", "frac_2edit_wt" = "#337ab7")
+
+figure_5h <- mean_editing_per_wt_mut_stems %>%
+    filter(enzyme != "none") %>%
+    ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
+               fill = paste(edit_type, insert_type, sep = "_"))) +
+    geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
+    geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+    facet_wrap(~factor(enzyme, levels = enzyme_order), 
+               labeller = as_labeller(facet_labels), nrow = 1) +
+    scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
+    scale_fill_manual(values = bar_colors,
+                      labels = c("frac_1edit_mut" = "1 edit (mut)", "frac_1edit_wt" = "1 edit (wt)",
+                                "frac_2edit_mut" = "2+ edits (mut)", "frac_2edit_wt" = "2+ edits (wt)")) +
+    geom_text(data = filter(fold_change_wt_mut_df, enzyme != "none"), 
+              aes(x = edit_type, y = y.position, label = label),
+              position = position_dodge(width = 0.8), size = 2.5, inherit.aes = FALSE) +
+    geom_text(data = filter(stat_data_wt_mut, enzyme != "none"), 
+              aes(x = edit_type, y = y.position + 2, label = label),
+              position = position_dodge(width = 0.8), size = 3, inherit.aes = FALSE) +
+    theme_classic() +
+    theme(
+        axis.text = element_text(size = 8, color = "black"),
+        axis.title = element_text(size = 8, color = "black"),
+        legend.text = element_text(size = 6, color = "black"),
+        legend.title = element_blank(),
+        strip.text = element_text(size = 8, color = "black"),
+        panel.spacing = unit(0.3, "lines"),
+        legend.position = "bottom",
+        legend.key.size = unit(0.4, "cm"),
+        strip.background = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white")
+    ) +
+    labs(x = "Edit Type", y = "Percent Editing", title = "Wild-type vs Mutant Stem BoxB Editing")
+
+ggsave("../figures/wt_vs_mut_stems_comparison.pdf", height = 3, width = 6)
 
 ## Supplementary Figure 4
 
