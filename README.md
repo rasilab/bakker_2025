@@ -80,4 +80,5 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 
 ## Changelog
 
+- 2026-09-22: Updated the Figure 2B loop analysis with the same complete-pair filtering, paired tests, and compact manuscript formatting as the recorder panel.
 - 2026-09-22: Updated the Figure 2B recorder analysis to remove one failed construct pair, use matched WT–MUT tests, and report filtered summary statistics.
