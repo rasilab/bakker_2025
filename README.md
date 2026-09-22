@@ -77,3 +77,7 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 | S4A               | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
 | S4B               | /boxb_in_vivo_sequencing/generate_figures.ipynb  |
 | S5B               | /ln_dms_sequencing/generate_figures.ipynb        |
+
+## Changelog
+
+- 2026-09-22: Updated the Figure 2B recorder analysis to remove one failed construct pair, use matched WT–MUT tests, and report filtered summary statistics.

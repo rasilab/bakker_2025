@@ -40,71 +40,211 @@ theme_figure <- theme_classic() +
 bar_colors <- c("frac_1edit_mut" = "#cccccc", "frac_1edit_wt" = "#a6dbe5",
                 "frac_2edit_mut" = "#888888", "frac_2edit_wt" = "#337ab7")
 
+# Figure 2B analysis and formatting choices
+figure2b_excluded_layout <- "spacer5_0"
+figure2b_excluded_window <- "1_3"
+figure2b_font_family <- "Helvetica"
+figure2b_font_size <- 7
+figure2b_axis_color <- "#777777"
+figure2b_concentration_order <- c("125nM", "250nM", "500nM")
+figure2b_enzyme_order <- c("lambdaN", "tada_only")
+figure2b_edit_order <- c("frac_1edit", "frac_2edit")
+figure2b_insert_order <- c("mut", "wt")
+
+theme_figure2b <- theme_classic(base_family = figure2b_font_family,
+                                base_size = figure2b_font_size) +
+  theme(
+    text = element_text(size = figure2b_font_size, family = figure2b_font_family),
+    axis.text = element_text(size = figure2b_font_size, family = figure2b_font_family,
+                             color = "black"),
+    axis.title = element_text(size = figure2b_font_size, family = figure2b_font_family,
+                              color = "black"),
+    strip.text = element_text(size = figure2b_font_size, family = figure2b_font_family,
+                              color = "black"),
+    panel.spacing.x = unit(0.2, "lines"),
+    panel.spacing.y = unit(0.8, "lines"),
+    axis.line = element_line(linewidth = 0.5, color = figure2b_axis_color),
+    axis.ticks = element_line(linewidth = 0.5, color = figure2b_axis_color),
+    axis.ticks.length = unit(2, "pt"),
+    axis.text.x = element_text(size = 6, family = figure2b_font_family,
+                               lineheight = 0.85, margin = margin(t = 2)),
+    strip.background = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(2, 2, 2, 2, "mm")
+  )
+
 # Define cbPalette for concentration plots
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 # Figure 2B: Recorder Region - Concentration Analysis
-mean_editing_per_concentration <- target_data %>%
+recorder_data <- target_data %>%
   filter(variable_type == "boxb", g_depleted == "no", 
          tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
   inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
-  mutate(frac_1edit = num_1_c / umi_counts, 
-         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
-  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
-  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
-  summarize(mean = 100 * mean(fraction_edited), 
-            se = 100 * sd(fraction_edited) / sqrt(n()), .groups = "drop")
+  mutate(layout = str_extract(oligo_name, "^spacer[35]_(0|10)"))
 
-# Calculate fold change and statistical tests
+recorder_excluded_rows <- recorder_data %>%
+  filter(layout == figure2b_excluded_layout,
+         variable_subpos == figure2b_excluded_window)
+recorder_sample_count <- n_distinct(recorder_data$sample_id)
+if (nrow(recorder_excluded_rows) != recorder_sample_count * length(figure2b_insert_order) ||
+    any(count(recorder_excluded_rows, sample_id)$n != length(figure2b_insert_order))) {
+  stop("Expected one failed WT construct and its matched MUT construct per recorder sample")
+}
+
+recorder_data <- recorder_data %>%
+  filter(!(layout == figure2b_excluded_layout &
+           variable_subpos == figure2b_excluded_window)) %>%
+  mutate(
+    tada_type = factor(tada_type, levels = figure2b_enzyme_order),
+    tada_conc = factor(tada_conc, levels = figure2b_concentration_order),
+    insert_type = factor(insert_type, levels = figure2b_insert_order),
+    edit_type_1 = num_1_c / umi_counts,
+    edit_type_2 = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) /
+      umi_counts,
+    pair_id = paste(layout, variable_subpos, sep = "__")
+  ) %>%
+  rename(frac_1edit = edit_type_1, frac_2edit = edit_type_2) %>%
+  pivot_longer(
+    cols = all_of(figure2b_edit_order),
+    names_to = "edit_type",
+    values_to = "fraction_edited"
+  ) %>%
+  mutate(edit_type = factor(edit_type, levels = figure2b_edit_order))
+
+recorder_construct_counts <- recorder_data %>%
+  count(sample_id, edit_type, insert_type)
+if (nrow(recorder_construct_counts) != recorder_sample_count *
+    length(figure2b_edit_order) * length(figure2b_insert_order) ||
+    any(recorder_construct_counts$n != 15)) {
+  stop("Expected 15 complete recorder layout-window pairs after filtering")
+}
+
+mean_editing_per_concentration <- recorder_data %>%
+  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
+  summarize(
+    mean = 100 * mean(fraction_edited),
+    se = 100 * sd(fraction_edited) / sqrt(n()),
+    n = n(),
+    .groups = "drop"
+  )
+
+recorder_annotation_positions <- mean_editing_per_concentration %>%
+  group_by(tada_type, tada_conc, edit_type) %>%
+  summarize(y_top = max(mean + se), .groups = "drop") %>%
+  left_join(
+    mean_editing_per_concentration %>%
+      group_by(tada_conc) %>%
+      summarize(panel_top = max(mean + se), .groups = "drop"),
+    by = "tada_conc"
+  ) %>%
+  mutate(
+    star_position = y_top + 0.04 * panel_top,
+    fold_position = y_top + 0.17 * panel_top
+  )
+
 fold_change_df <- mean_editing_per_concentration %>%
   select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
   pivot_wider(names_from = insert_type, values_from = mean) %>%
-  mutate(fold_change = wt / mut, label = paste0(signif(fold_change, 2), "x"),
-         y.position = pmax(wt, mut) + 6)
+  left_join(
+    recorder_annotation_positions %>%
+      select(tada_type, tada_conc, edit_type, fold_position),
+    by = c("tada_type", "tada_conc", "edit_type")
+  ) %>%
+  mutate(
+    fold_change = wt / mut,
+    label = paste0(signif(fold_change, 2), "x"),
+    y.position = fold_position
+  )
 
-stat_data <- target_data %>%
-  filter(variable_type == "boxb", g_depleted == "no", 
-         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
-  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
-  mutate(frac_1edit = num_1_c / umi_counts, 
-         frac_2edit = (num_2_c + num_3_c + num_4_c + num_5_c + num_6_c + num_7_c) / umi_counts) %>%
-  pivot_longer(cols = matches("^frac"), names_to = "edit_type", values_to = "fraction_edited") %>%
+recorder_paired_data <- recorder_data %>%
+  select(tada_type, tada_conc, edit_type, pair_id, insert_type, fraction_edited) %>%
+  pivot_wider(names_from = insert_type, values_from = fraction_edited)
+if (any(is.na(recorder_paired_data$wt)) || any(is.na(recorder_paired_data$mut))) {
+  stop("Every retained recorder construct must have matched WT and MUT values")
+}
+
+stat_data <- recorder_paired_data %>%
   group_by(tada_type, tada_conc, edit_type) %>%
-  do(broom::tidy(t.test(fraction_edited ~ insert_type, data = .))) %>%
-  ungroup() %>%
-  mutate(p_adj = p.adjust(p.value, method = "BH"),
-         significance = case_when(p_adj < 0.001 ~ "***", p_adj < 0.01 ~ "**", 
-                                 p_adj < 0.05 ~ "*", TRUE ~ "ns")) %>%
-  left_join(mean_editing_per_concentration %>% 
-            group_by(tada_type, tada_conc, edit_type) %>% 
-            summarize(y.position = max(mean) + 3, .groups = "drop"), 
-            by = c("tada_type", "tada_conc", "edit_type")) %>%
-  mutate(group1 = "mut", group2 = "wt", label = significance)
+  summarize(p.value = t.test(wt, mut, paired = TRUE)$p.value, .groups = "drop") %>%
+  mutate(p_adj = p.adjust(p.value, method = "BH")) %>%
+  left_join(
+    recorder_annotation_positions %>%
+      select(tada_type, tada_conc, edit_type, y.position = star_position),
+    by = c("tada_type", "tada_conc", "edit_type")
+  ) %>%
+  mutate(
+    group1 = "mut",
+    group2 = "wt",
+    significance = case_when(
+      p_adj < 0.001 ~ "***",
+      p_adj < 0.01 ~ "**",
+      p_adj < 0.05 ~ "*",
+      TRUE ~ "ns"
+    )
+  )
 
-# Plot concentration analysis
+recorder_statistics <- mean_editing_per_concentration %>%
+  select(tada_type, tada_conc, edit_type, insert_type, mean, se, n) %>%
+  pivot_wider(
+    names_from = insert_type,
+    values_from = c(mean, se, n),
+    names_glue = "{insert_type}_{.value}"
+  ) %>%
+  left_join(
+    stat_data %>% select(tada_type, tada_conc, edit_type,
+                         p.value, p_adj, significance),
+    by = c("tada_type", "tada_conc", "edit_type")
+  ) %>%
+  mutate(
+    n_pairs = pmin(mut_n, wt_n),
+    difference_percentage_points = wt_mean - mut_mean,
+    fold_change = wt_mean / mut_mean
+  ) %>%
+  select(
+    tada_type, tada_conc, edit_type, n_pairs,
+    mut_mean_percent = mut_mean, mut_se_percent = mut_se,
+    wt_mean_percent = wt_mean, wt_se_percent = wt_se,
+    difference_percentage_points, fold_change,
+    p_value = p.value, p_adjusted_bh = p_adj, significance
+  ) %>%
+  mutate(
+    across(
+      c(mut_mean_percent, mut_se_percent, wt_mean_percent, wt_se_percent,
+        difference_percentage_points, fold_change),
+      ~ round(.x, 2)
+    )
+  )
+
+write_csv(recorder_statistics, "../tables/fig2b_recorder_statistics.csv")
+
 p_concentration <- mean_editing_per_concentration %>%
   ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
             fill = paste(edit_type, insert_type, sep = "_"))) +
   geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
-  geom_errorbar(width = 0.2, linewidth = 0.3, position = position_dodge(width = 0.8)) +
+  geom_errorbar(width = 0.2, linewidth = 0.2, color = "black",
+                position = position_dodge(width = 0.8)) +
   facet_grid(tada_conc ~ tada_type, scales = "free_y",
             labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
-  scale_x_discrete(labels = c("frac_1edit" = "1 edit", "frac_2edit" = "2+ edits")) +
-  scale_fill_manual(values = bar_colors,
-                    labels = c("frac_1edit_mut" = "1 edit, MUT", "frac_1edit_wt" = "1 edit, WT",
-                              "frac_2edit_mut" = "2+ edits, MUT", "frac_2edit_wt" = "2+ edits, WT"),
-                    name = NULL) +
+  scale_x_discrete(labels = c("frac_1edit" = "MUT    WT\n1 edit",
+                              "frac_2edit" = "MUT    WT\n2+ edits")) +
+  scale_fill_manual(values = bar_colors, name = NULL) +
+  guides(fill = "none") +
   labs(x = NULL, y = "% Edited RNA") +
-  theme_figure +
+  theme_figure2b +
   stat_pvalue_manual(data = stat_data %>% filter(significance != "ns"),
-                    x = "edit_type", y.position = "y.position", 
-                    tip.length = 0.01, size = 2, inherit.aes = FALSE) +
+                    x = "edit_type", y.position = "y.position", label = "significance",
+                    tip.length = 0.01, size = 5 / .pt, inherit.aes = FALSE) +
   geom_text(data = fold_change_df, aes(x = edit_type, y = y.position, label = label),
-            inherit.aes = FALSE, size = 2.2)
+            inherit.aes = FALSE, size = figure2b_font_size / .pt,
+            family = figure2b_font_family)
 
-cairo_pdf("../figures/fig2b_recorder.pdf", width = 3, height = 3)
-print(p_concentration)
-dev.off()
+ggsave("../figures/fig2b_recorder.png", p_concentration,
+       width = 3, height = 3.2, dpi = 96, bg = "white")
+ggsave("../figures/fig2b_recorder.pdf", p_concentration,
+       width = 3, height = 3.2, device = cairo_pdf, bg = "white")
 
 # Figure 2B: Time Course Analysis
 mean_editing_per_time <- target_data %>%
@@ -299,7 +439,7 @@ print(figure_2d)
 dev.off()
 
 # Save summary data
-write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
+write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ round(.x, 2))),
           "../tables/fig2b_recorder.csv")
 write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig2b_loop.csv")
