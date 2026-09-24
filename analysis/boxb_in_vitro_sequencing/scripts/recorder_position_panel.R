@@ -30,6 +30,9 @@ figure_width <- 6.3
 figure_height <- 3.6
 panel_spacing_pt <- 9
 y_headroom <- 0.08
+zero_line_color <- "#B3B3B3"
+zero_line_width <- 0.15
+zero_line_type <- "dotted"
 
 # Read the established position/context and sequencing-column annotations.
 positions <- read_csv(position_file, show_col_types = FALSE) %>%
@@ -99,8 +102,8 @@ axis_breaks <- as.vector(rbind(positions$position_index + insert_offsets["wt"],
                                positions$position_index + insert_offsets["mut"]))
 figure <- ggplot(plot_data, aes(x, mean_percent, color = color_group)) +
   geom_hline(data = tibble(tada_type = enzyme_order[1], zero = 0),
-             aes(yintercept = zero), color = recorder_axis_color,
-             linewidth = recorder_axis_width, show.legend = FALSE) +
+             aes(yintercept = zero), color = zero_line_color,
+             linewidth = zero_line_width, linetype = zero_line_type, show.legend = FALSE) +
   geom_errorbar(aes(ymin = mean_percent - se_percent, ymax = mean_percent + se_percent),
                 width = 0.035, linewidth = 0.4, show.legend = FALSE) +
   geom_point(size = 1.25, shape = 16) +
