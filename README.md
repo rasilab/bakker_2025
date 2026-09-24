@@ -43,7 +43,7 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 | Figure Panel      | Folder                                           |
 | :---------------- | :----------------------------------------------- |
 | 2B                | [Recorder preparation and plotting](./analysis/boxb_in_vitro_sequencing/README.md) |
-| 2C                | [WT/MUT recorder-position comparison](./analysis/boxb_in_vitro_sequencing/README.md#figure-2c-recorder-positions) |
+| 2C                | [WT/MUT recorder positions by distance](./analysis/boxb_in_vitro_sequencing/README.md#figure-2c-recorder-positions) |
 | 2D (old)          | Retired single-enzyme recorder-position plot; replaced by Figure 2C |
 | 2E                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
 | 3B                | /boxb_in_vitro_sequencing/generate_figures.ipynb |

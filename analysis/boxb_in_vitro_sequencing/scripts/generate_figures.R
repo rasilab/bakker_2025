@@ -66,41 +66,6 @@ wildtype_target_random_inserts <- barcode_annotations  %>%
   print()
 
 
-options(repr.plot.width = 5, repr.plot.height = 4)
-legend_labels=c("lambdaN"="λN-TadA","tada_only"="TadA")
-
-mean_editing_per_concentration <- target_data  %>%
-  filter(variable_type=="target", g_depleted=="no",sample_id %in% c("i79_p8","i79_p7","i79_p9","i79_p2","i79_p3","i79_p4")) %>%
-  inner_join(wildtype_target_random_inserts, by = c("variable_subpos", "insert" = "wt_insert")) %>%
-  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}")) %>%
-  mutate(fraction_edited=1-fraction_num_0_c) %>%
-  select(sample_id, sample_name, variable_subpos, matches("fraction_"),tada_type,tada_conc) %>%
-  group_by(tada_type,tada_conc) %>%
-  summarize(mean=mean(fraction_edited),
-  se=sd(fraction_edited)/sqrt(n()),
-  n=n(),
-  .groups = "drop")%>%
-  print()
-
-  write_tsv(mean_editing_per_concentration,"../tables/mean_editing_per_concentration.tsv")
-
-options(repr.plot.width = 5, repr.plot.height = 4)
-legend_labels=c("lambdaN"="λN-TadA","tada_only"="TadA")
-
-mean_loop_editing_per_concentration <- loop_data  %>%
-  filter(variable_type=="target", g_depleted=="no",sample_id %in% c("i79_p8","i79_p7","i79_p9","i79_p2","i79_p3","i79_p4")) %>%
-  group_by(sample_id,barcode)%>%
-  mutate(across(matches("num_._C"), ~ round(sum(.x) / sum(umi_counts), 5), .names = "fraction_{col}")) %>%
-  mutate(fraction_edited=1-fraction_num_0_C) %>%
-  select(sample_id, sample_name, variable_subpos, matches("fraction_"),tada_type,tada_conc) %>%
-  group_by(tada_type,tada_conc) %>%
-  summarize(mean=mean(fraction_edited),
-  se=sd(fraction_edited)/sqrt(n()),
-  .groups = "drop")%>%
-  print()
-
-write_tsv(mean_loop_editing_per_concentration,"../tables/mean_loop_editing_per_concentration.tsv")
-
 options(repr.plot.width = 8, repr.plot.height = 5)
 raw_data <- target_data  %>%
   filter(variable_type=="target", g_depleted=="no",sample_id %in% c("i79_p3")) %>%
@@ -475,68 +440,7 @@ mean_edits_single_flanking_context_variable <- context_data %>%
 
 write_tsv(mean_edits_single_flanking_context_variable,"../tables/mean_edits_single_flanking_context_variable.tsv")
 
-  mean_editing_per_concentration %>% write_tsv("../tables/fig_2b_1_data.tsv")
-  
-  fig2b_1 <- mean_editing_per_concentration  %>%
-  ggplot(aes(x = tada_conc, y = mean*100, color=tada_type)) +  
-  geom_point(size=1) +
-  geom_errorbar(aes(ymin = (mean - se)*100, ymax = (mean + se)*100), width = 0.25) +
-  scale_y_continuous(limits = c(0, 100)) +
-  scale_x_discrete(labels=c("100","250","500"))+
-  scale_color_discrete(labels=legend_labels)+
-      theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey"),
-      legend.position = "none"
-    )+
-    labs(x = "Enzyme Concentration (nM)", y = "Percent Edited: Recorder",color="TadA Type")
-  
-  mean_loop_editing_per_concentration %>% write_tsv("../tables/fig_2b_2_data.tsv")
-
-  fig2b_2 <- mean_loop_editing_per_concentration  %>%
-  ggplot(aes(x = tada_conc, y = mean*100, color=tada_type)) +  
-  geom_point() +
-  geom_errorbar(aes(ymin = (mean - se)*100, ymax = (mean + se)*100), width = 0.25) +
-  scale_x_discrete(labels=c("100","250","500"))+
-  scale_y_continuous(limits = c(0, 100)) +
-  scale_color_discrete(labels=legend_labels)+
-      theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey"),
-      legend.position = "none"
-    )+
-    labs(x = "Enzyme Concentration (nM)", y = "Percent Edited: boxB Loop",color="TadA Type")
-
-shared_legend <- get_legend(
-  fig2b_1 + theme(
-    legend.position = "right",
-    legend.justification = "center"
-  )
-)
-
-plots_combined <- plot_grid(
-  fig2b_1, fig2b_2,
-  nrow = 1,
-  align = "hv"
-)
-
-final_plot <- plot_grid(
-  plots_combined, shared_legend,
-  rel_widths = c(1, 0.25)  # Adjust as needed
-)
-
-# Display the final plot
-print(plots_combined)
-ggsave("../figures/figure_2b.pdf", height=2, width=3)
-
+# Fixed-recorder Figure 2B: plot_figure2b_recorder.R
 
 mean_editing_recorder_position  %>% write_tsv("../tables/fig_2c_data.tsv")
 
@@ -570,7 +474,7 @@ position_labs=c("7"="UAG",
 )
 position_order=c("7","6","5","4","3","2","1","0")
 
-# Recorder-position WT/MUT comparison: 02_generate_figure2c_recorder_positions.R
+# Recorder-position WT/MUT comparison: plot_figure2c_recorder_positions.R
 
 options(repr.plot.width = 10, repr.plot.height = 3)
 subset_position_labs=c("7"="UAG",
