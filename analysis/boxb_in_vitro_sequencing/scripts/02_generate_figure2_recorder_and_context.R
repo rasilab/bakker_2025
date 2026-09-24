@@ -1,5 +1,5 @@
 # Generate Figure 2 recorder and sequence-context panels
-# Reads processed data and generates Figure 2B–2E panels
+# Legacy concentration, distance, and randomized-context panels; recorder positions are separate
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -336,66 +336,11 @@ cairo_pdf("../figures/fig2c.pdf", width = 4, height = 1.25)
 print(p_distance)
 dev.off()
 
-# Figure 2D: Position Context Analysis
-position_labs <- c("7" = "UAG",
-                  "6" = "GAA", 
-                  "5" = "AAU",
-                  "4" = "UAC",
-                  "3" = "CAC",
-                  "2" = "CAU",
-                  "1" = "UAA",
-                  "0" = "AAU")
-position_order <- c("7", "6", "5", "4", "3", "2", "1", "0")
-
-individual_a_editing_context_constant <- target_data %>%
-  filter(variable_type == "boxb", g_depleted == "no", 
-         tada_type %in% c("lambdaN", "tada_only"), condition == "37_2hr") %>%
-  inner_join(wildtype_boxb_random_inserts, by = c("variable_subpos", "insert" = "wt_insert")) %>%
-  mutate(across(matches("pos_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}")) %>%
-  select(tada_type, tada_conc, target_dist, matches("fraction_")) %>%
-  group_by(tada_type, tada_conc) %>%
-  summarize(across(matches("fraction_"), ~mean(.x), .names = "mean_{col}"),
-            across(starts_with("fraction_"), ~sd(.x)/sqrt(n()), .names = "se_{col}"),
-            across(starts_with("fraction_"), ~n(), .names = "n_{col}"),
-            .groups = "drop") %>%
-  pivot_longer(
-    cols = c(starts_with("mean_"), starts_with("se_"), starts_with("n_")), 
-    names_to = c(".value", "position"),
-    names_pattern = "(mean|se|n)_fraction_pos_(\\d+)_c"
-  ) %>%
-  group_by(tada_conc, tada_type) %>%
-  mutate(scaled_mean = rank(mean))
-
-figure_2d <- individual_a_editing_context_constant %>%
-  filter(tada_conc == "250nM", tada_type == "lambdaN") %>%
-  ggplot(aes(x = factor(position, level = position_order), y = mean * 100, 
-             color = as_factor(scaled_mean))) +  
-  geom_point(size = 1.5) +
-  geom_errorbar(aes(ymin = (mean - se) * 100, ymax = (mean + se) * 100), 
-                width = 0.25, linewidth = 0.3) +
-  scale_x_discrete(labels = position_labs) +
-  scale_y_continuous() +
-  scale_color_brewer(palette = "RdBu", direction = -1) +
-  guides(color = "none") +
-  labs(x = "Recorder Position Context", y = "% Edited RNA") +
-  theme_figure +
-  theme(axis.line = element_line(color = "grey"))
-
-cairo_pdf("../figures/fig2d.pdf", width = 3, height = 1.5)
-print(figure_2d)
-dev.off()
-
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ round(.x, 2))),
           "../tables/fig2b_recorder.csv")
 write_csv(plot_data %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig2c_plot_data.csv")
-write_csv(individual_a_editing_context_constant %>% 
-          filter(tada_conc == "250nM", tada_type == "lambdaN") %>%
-          mutate(across(c(mean, se), ~ signif(.x, 2))) %>%
-          select(position, mean, se), 
-          "../tables/fig2d_plot_data.csv")
-
 # Figure 2E: Sequence Context Analysis
 context_data <- target_data %>%
   filter(sample_id == "i79_p3", variable_type == "target", target_pos_to_boxb == "5") %>%
@@ -488,16 +433,5 @@ write_csv(individual_a_editing_context_variable %>%
           mutate(mean = signif(mean, 2)) %>%
           select(position, fiveprime, threeprime, mean), 
           "../tables/fig2e_plot_data.csv")
-
-# Combined Figure 2D and 2E
-combined_2d_2e <- plot_grid(
-  figure_2d, figure_2e,
-  ncol = 1,
-  align = "hv"
-)
-
-cairo_pdf("../figures/figure_2d_2e.pdf", width = 3.25, height = 2.25)
-print(combined_2d_2e)
-dev.off()
 
 cat("Figure 2 generation complete!\n")

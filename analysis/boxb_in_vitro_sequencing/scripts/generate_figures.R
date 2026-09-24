@@ -570,30 +570,7 @@ position_labs=c("7"="UAG",
 )
 position_order=c("7","6","5","4","3","2","1","0")
 
-individual_a_editing_context_constant  %>%
-  filter(tada_conc=="250nM",tada_type=="lambdaN")%>%
-  write_tsv("../tables/fig_2d_data.tsv")
-
-figure_2d<- individual_a_editing_context_constant  %>%
-  filter(tada_conc=="250nM",tada_type=="lambdaN")%>%
-  ggplot(aes(x = factor(position,level=position_order), y = mean*100,color=as_factor(mean))) +  
-  geom_point() +
-  geom_errorbar(aes(ymin = (mean - se)*100, ymax = (mean + se)*100), width = 0.25) +
-  scale_x_discrete(labels=position_labs)+
-  scale_y_continuous(limits = c(0, 25)) +
-  scale_color_brewer(palette = "RdBu",direction= -1)+
-  guides(color="none")+
-    theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey"),
-    )+
-    labs(x = "Recorder Position Context", y = "Percent Edited")
-
-# ggsave("../figures/context_constant.pdf",height = 2,width = 3)
+# Recorder-position WT/MUT comparison: 02_generate_figure2c_recorder_positions.R
 
 options(repr.plot.width = 10, repr.plot.height = 3)
 subset_position_labs=c("7"="UAG",
@@ -625,13 +602,6 @@ figure_2e <- individual_a_editing_context_variable %>%
          )
 
 # ggsave("../figures/context_variable.pdf",height = 1.2,width = 3.5)
-
-plot_grid(
-  figure_2d, figure_2e,
-  ncol = 1,
-  align = "hv")
-
-ggsave("../figures/figure_2d_2e.pdf",height = 2.25,width = 3.25)
 
 editing_per_loop_variant %>%
     filter(tada_type=="lambdaN",tada_conc=="250nM")%>%
