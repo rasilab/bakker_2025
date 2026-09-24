@@ -27,15 +27,27 @@
 
 ## Figure 2C recorder positions
 
-- [Generate Figure 2C](./scripts/plot_figure2c_recorder_positions.R) from the repository root. This is the distance-resolved WT/MUT comparison at 250 nM, 37 °C, and two hours. It replaces the separate pooled-by-position panel and the provisional distance-plot filenames.
-- TadA–λN is the top facet with pink WT points and error bars; TadA8.20 is the bottom facet with green WT points and error bars. MUT measurements use gray shades in both facets. Within each enzyme, light-to-dark shades distinguish boxB recorder distances of 0, 10, 20, and 30 nt. Each facet has an independent y-axis range starting at zero, with 8% headroom above its highest error bar, and both share one bottom x-axis. There are no connecting lines.
+- [Generate Figure 2C and its supplementary concentrations](./scripts/plot_figure2c_recorder_positions.R) from the repository root. The single entry script runs [shared preparation and plotting](./scripts/recorder_position_panel.R) for 250, 125, and 500 nM and saves separate figure/table files. This is the distance-resolved WT/MUT comparison at 250 nM, 37 °C, and two hours. It replaces the separate pooled-by-position panel and the provisional distance-plot filenames.
+- TadA–λN is the top facet with pink WT points and error bars; TadA8.20 is the bottom facet with green WT points and error bars. MUT measurements use gray shades in both facets. Within each enzyme, light-to-dark shades distinguish boxB recorder distances of 0, 10, 20, and 30 nt. Each facet has an independent y-axis range starting at zero, with 8% headroom above its highest error bar, and both share one bottom x-axis. A thin gray horizontal line marks zero in each facet, without adding upper-facet x-axis labels. There are no connecting lines.
 - Each of the 128 points is an equally weighted construct mean ± SEM. The failed spacer5_0/window 1_3 pair is excluded for both enzymes, leaving three matched WT/MUT constructs at 0 nt and four at each other distance. These are construct measurements from one reaction per enzyme, not independent biological replicates.
-- The script reads only the required columns of two compressed sample-count files, joins [sample metadata](./annotations/sample_info.csv), [barcode annotations](./annotations/barcode_annotations.csv), and [WT/MUT stem definitions](./tables/boxb_wt_mut_stems.csv), and uses [recorder-position annotations](./annotations/recorder_positions.csv). The position/context and count-column mappings were preserved from the previous position plot. Neither the retired pooled summary nor the large shared prepared table is a plotting dependency.
+- Each concentration reads only the required columns of its two compressed sample-count files, joins [sample metadata](./annotations/sample_info.csv), [barcode annotations](./annotations/barcode_annotations.csv), and [WT/MUT stem definitions](./tables/boxb_wt_mut_stems.csv), and uses [recorder-position annotations](./annotations/recorder_positions.csv). The position/context and count-column mappings were preserved from the previous position plot. Neither the retired pooled summary nor the large shared prepared table is a plotting dependency.
 - The [summary table](./tables/fig2c_recorder_positions.csv) contains all 128 full-precision means, SEMs, and sample sizes. Pooled significance stars are omitted because they do not test distance-specific groups.
 - Validation: all 128 means and SEMs agree with independent calculations from the shared prepared table within 1e-12. Renaming the distance plot to Figure 2C leaves its numerical table byte-identical. The initial complete distance-script run took 10.66 seconds in the preferred node-local container.
 - Figure artifacts: [PNG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2c_recorder_positions.png?raw=1) and [PDF](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2c_recorder_positions.pdf?raw=1).
 
 ![Figure 2C recorder positions by distance](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2c_recorder_positions.png?raw=1)
+
+## Supplementary recorder positions at 125 and 500 nM
+
+- The same [Figure 2C script](./scripts/plot_figure2c_recorder_positions.R) produces two supplementary panels, each with the same WT/MUT selection, distance gradients, three/four constructs per error bar, and independent enzyme y-axis ranges as Figure 2C. The sample metadata specify nanomolar concentrations; the incubations remain 37 °C for two hours.
+- Filenames use descriptive concentration labels until supplement numbering is assigned. Each figure has its own concentration title and 128-row full-precision summary: [125 nM](./tables/supp_recorder_positions_125nM.csv) and [500 nM](./tables/supp_recorder_positions_500nM.csv).
+- 125 nM artifacts: [PNG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_125nM.png?raw=1) and [PDF](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_125nM.pdf?raw=1).
+
+![Supplementary recorder positions at 125 nM](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_125nM.png?raw=1)
+
+- 500 nM artifacts: [PNG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.png?raw=1) and [PDF](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.pdf?raw=1).
+
+![Supplementary recorder positions at 500 nM](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.png?raw=1)
 
 ## Preserved randomized-recorder analyses
 
@@ -85,6 +97,8 @@
 
 ## Validation
 
+- Supplementary concentrations: independently recalculated all 384 means and SEMs across 125, 250, and 500 nM from the shared annotated counts; agreement within 1e-12 and matching sample sizes. Adding zero baselines leaves all three numerical tables byte-identical. All three figures were visually checked; the main Figure 2C gains only the upper-facet baseline. One run of the shared entry script generated all three panels in 13.50 seconds, including container startup.
+
 - Final cleanup check: both regenerated PNGs are byte-identical to the approved figures, all Figure 2B tables are unchanged, and the Figure 2C table is byte-identical. The legacy randomized-context calculations and heatmap plotting blocks are unchanged, and all six active/retained R sources parse. Final container runs took 7.50 seconds for Figure 2B plotting and 8.66 seconds for Figure 2C preparation plus plotting.
 
 - Compared all 360 construct measurements, 24 means and standard errors, and 12 comparisons against the original R implementation using the real data; agreement within absolute and relative tolerances of 1e-12. Existing rounded summaries also agree.
@@ -95,6 +109,8 @@
 - Initial six-sample refactor elapsed times, including container startup: preparation 6.76 seconds; plotting 7.49 seconds. Peak memory was approximately 155 MiB and 200 MiB, respectively. These predate the two added time-course samples and are not runtime guarantees.
 
 ## Changelog
+
+- **2026-09-24:** Extended the Figure 2C entry script to generate matching 125 nM and 500 nM supplementary panels through shared preparation/plotting code, using descriptive filenames until supplement numbering is assigned. Added a thin gray zero baseline to the upper facet of all three recorder-position figures.
 
 - **2026-09-24:** Finalized Figure 2B/2C presentation and the distance-resolved Figure 2C workflow; preserved numerical results, consolidated plotting styles and position annotations, retired superseded fixed-recorder code and figures, and retained randomized-recorder distance/heatmap analyses in separate legacy scripts.
 - **2026-09-24:** Registered the WT/MUT recorder-position comparison as Figure 2C, documented 15 construct measurements per error bar, and retired the old single-enzyme plot and its plotting code while preserving other analyses.
