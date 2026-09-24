@@ -42,7 +42,7 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 
 | Figure Panel      | Folder                                           |
 | :---------------- | :----------------------------------------------- |
-| 2B                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| 2B                | [Recorder preparation and plotting](./analysis/boxb_in_vitro_sequencing/README.md) |
 | 2C                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
 | 2D                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
 | 2E                | /boxb_in_vitro_sequencing/generate_figures.ipynb |

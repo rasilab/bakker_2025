@@ -1,0 +1,9 @@
+variable_subpos,insert_type,insert
+1_3,wt,CCC
+1_3,mut,GGG
+4_6,wt,GGG
+4_6,mut,CCC
+14_16,wt,CCC
+14_16,mut,GGG
+17_19,wt,GGG
+17_19,mut,CCC
