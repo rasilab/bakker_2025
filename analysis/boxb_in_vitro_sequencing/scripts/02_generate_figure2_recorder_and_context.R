@@ -1,5 +1,5 @@
-# Generate Figure 2 Panels
-# Reads processed data and generates all Figure 2 panels
+# Generate Figure 2 recorder and sequence-context panels
+# Reads processed data and generates Figure 2B–2E panels
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -9,7 +9,6 @@ suppressPackageStartupMessages({
 
 # Read processed data
 target_data <- read_csv("../tables/target_data_processed.csv", show_col_types = FALSE)
-loop_data <- read_csv("../tables/loop_data_processed.csv", show_col_types = FALSE)
 boxb_wt_mut_stems <- read_csv("../tables/boxb_wt_mut_stems.csv", show_col_types = FALSE)
 wildtype_boxb_random_inserts <- read_csv("../tables/wildtype_boxb_random_inserts.csv", show_col_types = FALSE)
 
@@ -309,198 +308,6 @@ cairo_pdf("../figures/fig2b_recorder_time.pdf", width = 4.2, height = 1.125)
 print(p_time)
 dev.off()
 
-# Figure 2B: Loop Region Analysis
-loop_plot_data <- loop_data %>%
-  filter(variable_type == "boxb", g_depleted == "no", 
-         tada_type %in% c("tada_only", "lambdaN"), condition == "37_2hr") %>%
-  inner_join(boxb_wt_mut_stems, by = c("variable_subpos", "insert")) %>%
-  mutate(layout = str_extract(oligo_name, "^spacer[35]_(0|10)"))
-
-loop_excluded_rows <- loop_plot_data %>%
-  filter(layout == figure2b_excluded_layout,
-         variable_subpos == figure2b_excluded_window)
-loop_sample_count <- n_distinct(loop_plot_data$sample_id)
-if (nrow(loop_excluded_rows) != loop_sample_count * length(figure2b_insert_order) ||
-    any(count(loop_excluded_rows, sample_id)$n != length(figure2b_insert_order))) {
-  stop("Expected one failed WT construct and its matched MUT construct per loop sample")
-}
-
-loop_plot_data <- loop_plot_data %>%
-  filter(!(layout == figure2b_excluded_layout &
-           variable_subpos == figure2b_excluded_window)) %>%
-  mutate(
-    tada_type = factor(tada_type, levels = figure2b_enzyme_order),
-    tada_conc = factor(tada_conc, levels = figure2b_concentration_order),
-    insert_type = factor(insert_type, levels = figure2b_insert_order),
-    frac_1edit = num_1_c / umi_counts,
-    frac_2edit = (num_2_c + num_3_c) / umi_counts,
-    pair_id = paste(layout, variable_subpos, sep = "__")
-  ) %>%
-  pivot_longer(
-    cols = all_of(figure2b_edit_order),
-    names_to = "edit_type",
-    values_to = "fraction_edited"
-  ) %>%
-  mutate(edit_type = factor(edit_type, levels = figure2b_edit_order))
-
-loop_construct_counts <- loop_plot_data %>%
-  count(sample_id, edit_type, insert_type)
-if (nrow(loop_construct_counts) != loop_sample_count *
-    length(figure2b_edit_order) * length(figure2b_insert_order) ||
-    any(loop_construct_counts$n != 15)) {
-  stop("Expected 15 complete loop layout-window pairs after filtering")
-}
-
-mean_loop_editing_per_concentration <- loop_plot_data %>%
-  group_by(tada_type, tada_conc, edit_type, insert_type) %>%
-  summarize(
-    mean = 100 * mean(fraction_edited),
-    se = 100 * sd(fraction_edited) / sqrt(n()),
-    n = n(),
-    .groups = "drop"
-  )
-
-loop_annotation_positions <- mean_loop_editing_per_concentration %>%
-  group_by(tada_type, tada_conc, edit_type) %>%
-  summarize(y_top = max(mean + se), .groups = "drop") %>%
-  left_join(
-    mean_loop_editing_per_concentration %>%
-      group_by(tada_conc) %>%
-      summarize(panel_top = max(mean + se), .groups = "drop"),
-    by = "tada_conc"
-  ) %>%
-  mutate(
-    star_position = y_top + 0.04 * panel_top,
-    fold_position = y_top + 0.17 * panel_top
-  )
-
-loop_fold_change_df <- mean_loop_editing_per_concentration %>%
-  select(tada_type, tada_conc, edit_type, insert_type, mean) %>%
-  pivot_wider(names_from = insert_type, values_from = mean) %>%
-  left_join(
-    loop_annotation_positions %>%
-      select(tada_type, tada_conc, edit_type, fold_position),
-    by = c("tada_type", "tada_conc", "edit_type")
-  ) %>%
-  mutate(
-    fold_change = wt / mut,
-    label = paste0(signif(fold_change, 2), "x"),
-    y.position = fold_position
-  )
-
-loop_paired_data <- loop_plot_data %>%
-  select(tada_type, tada_conc, edit_type, pair_id, insert_type, fraction_edited) %>%
-  pivot_wider(names_from = insert_type, values_from = fraction_edited)
-if (any(is.na(loop_paired_data$wt)) || any(is.na(loop_paired_data$mut))) {
-  stop("Every retained loop construct must have matched WT and MUT values")
-}
-
-loop_stat_data <- loop_paired_data %>%
-  group_by(tada_type, tada_conc, edit_type) %>%
-  summarize(p.value = t.test(wt, mut, paired = TRUE)$p.value, .groups = "drop") %>%
-  mutate(p_adj = p.adjust(p.value, method = "BH")) %>%
-  left_join(
-    loop_annotation_positions %>%
-      select(tada_type, tada_conc, edit_type, y.position = star_position),
-    by = c("tada_type", "tada_conc", "edit_type")
-  ) %>%
-  mutate(
-    group1 = "mut",
-    group2 = "wt",
-    significance = case_when(
-      p_adj < 0.001 ~ "***",
-      p_adj < 0.01 ~ "**",
-      p_adj < 0.05 ~ "*",
-      TRUE ~ "ns"
-    )
-  )
-
-loop_statistics <- mean_loop_editing_per_concentration %>%
-  select(tada_type, tada_conc, edit_type, insert_type, mean, se, n) %>%
-  pivot_wider(
-    names_from = insert_type,
-    values_from = c(mean, se, n),
-    names_glue = "{insert_type}_{.value}"
-  ) %>%
-  left_join(
-    loop_stat_data %>% select(tada_type, tada_conc, edit_type,
-                              p.value, p_adj, significance),
-    by = c("tada_type", "tada_conc", "edit_type")
-  ) %>%
-  mutate(
-    n_pairs = pmin(mut_n, wt_n),
-    difference_percentage_points = wt_mean - mut_mean,
-    fold_change = wt_mean / mut_mean
-  ) %>%
-  select(
-    tada_type, tada_conc, edit_type, n_pairs,
-    mut_mean_percent = mut_mean, mut_se_percent = mut_se,
-    wt_mean_percent = wt_mean, wt_se_percent = wt_se,
-    difference_percentage_points, fold_change,
-    p_value = p.value, p_adjusted_bh = p_adj, significance
-  ) %>%
-  mutate(
-    across(
-      c(mut_mean_percent, mut_se_percent, wt_mean_percent, wt_se_percent,
-        difference_percentage_points, fold_change),
-      ~ round(.x, 2)
-    )
-  )
-
-write_csv(loop_statistics, "../tables/fig2b_loop_statistics.csv")
-
-p_loop <- mean_loop_editing_per_concentration %>%
-  ggplot(aes(x = edit_type, y = mean, ymax = mean + se, ymin = mean - se,
-            fill = paste(edit_type, insert_type, sep = "_"))) +
-  geom_col(color = "black", linewidth = 0.2, position = position_dodge(width = 0.8), width = 0.7) +
-  geom_errorbar(width = 0.2, linewidth = 0.2, color = "black",
-                position = position_dodge(width = 0.8)) +
-  facet_grid(tada_conc ~ tada_type, scales = "free_y",
-            labeller = labeller(tada_type = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"))) +
-  scale_x_discrete(labels = c("frac_1edit" = "MUT    WT\n1 edit",
-                              "frac_2edit" = "MUT    WT\n2+ edits")) +
-  scale_fill_manual(values = bar_colors, name = NULL) +
-  guides(fill = "none") +
-  labs(x = NULL, y = "% Edited RNA") +
-  theme_figure2b +
-  stat_pvalue_manual(data = loop_stat_data %>% filter(significance != "ns"),
-                     x = "edit_type", y.position = "y.position", label = "significance",
-                     tip.length = 0.01, size = 5 / .pt, inherit.aes = FALSE) +
-  geom_text(data = loop_fold_change_df,
-            aes(x = edit_type, y = y.position, label = label),
-            inherit.aes = FALSE, size = figure2b_font_size / .pt,
-            family = figure2b_font_family)
-
-ggsave("../figures/fig2b_loop.png", p_loop,
-       width = 3, height = 3.2, dpi = 96, bg = "white")
-ggsave("../figures/fig2b_loop.pdf", p_loop,
-       width = 3, height = 3.2, device = cairo_pdf, bg = "white")
-
-# Loop Concentration Dependence
-p_loop_concentration <- mean_loop_editing_per_concentration %>%
-  group_by(tada_type, tada_conc, insert_type) %>%
-  summarize(mean_1plus = sum(mean), se_1plus = sqrt(sum(se^2)), .groups = "drop") %>%
-  mutate(tada_conc_numeric = as.numeric(str_extract(tada_conc, "\\d+\\.?\\d*"))) %>%
-  ggplot(aes(x = tada_conc_numeric, y = mean_1plus, color = tada_type, 
-             shape = insert_type, group = interaction(tada_type, insert_type))) +
-  geom_point(size = 1.5, stroke = 0.3) +
-  geom_line(linewidth = 0.4) +
-  geom_errorbar(aes(ymin = mean_1plus - se_1plus, ymax = mean_1plus + se_1plus), 
-                width = 0.02, linewidth = 0.3) +
-  scale_x_continuous(name = "TadA concentration (μM)", 
-                     breaks = c(0.1, 0.5, 2.5), labels = c("0.1", "0.5", "2.5"),
-                     trans = "log10") +
-  scale_color_manual(values = cbPalette,
-                     labels = c("tada_only" = "TadA", "lambdaN" = "λN-TadA"), name = NULL) +
-  scale_shape_manual(values = c("wt" = 16, "mut" = 17),
-                     labels = c("wt" = "WT", "mut" = "MUT"), name = NULL) +
-  labs(y = "% Edited RNA") +
-  theme_figure
-
-cairo_pdf("../figures/fig2b_loop_concentration.pdf", width = 2.5, height = 2)
-print(p_loop_concentration)
-dev.off()
-
 # Figure 2C: Distance Dependence
 plot_data <- target_data %>%
   filter(variable_type == "target", tada_type %in% c("tada_only", "lambdaN"),
@@ -581,8 +388,6 @@ dev.off()
 # Save summary data
 write_csv(mean_editing_per_concentration %>% mutate(across(c(mean, se), ~ round(.x, 2))),
           "../tables/fig2b_recorder.csv")
-write_csv(mean_loop_editing_per_concentration %>% mutate(across(c(mean, se), ~ round(.x, 2))),
-          "../tables/fig2b_loop.csv")
 write_csv(plot_data %>% mutate(across(c(mean, se), ~ signif(.x, 2))), 
           "../tables/fig2c_plot_data.csv")
 write_csv(individual_a_editing_context_constant %>% 

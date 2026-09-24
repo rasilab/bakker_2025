@@ -61,7 +61,7 @@ The `analysis/boxb_in_vitro_sequencing/scripts/generate_figures.R` script is a l
 - `../tables/hairpin_annotations.csv` (processed hairpin metadata)
 
 ### Module 2: Figure 2 Generation (Concentration & Distance Effects)
-**File:** `02_generate_figure2.R`
+**File:** `02_generate_figure2_recorder_and_context.R`
 **Complexity:** Medium
 **Runtime:** 30-60 seconds
 
