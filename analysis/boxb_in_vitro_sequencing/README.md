@@ -49,6 +49,20 @@
 
 ![Supplementary recorder positions at 500 nM](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.png?raw=1)
 
+## Fixed-distance recorder context variants
+
+- [Prepare the measurements](./scripts/prepare_recorder_context_variants.py), then [plot the small output tables](./scripts/plot_recorder_context_variants.py), running both scripts from the repository root inside the analysis container. This follows the recent recorder/context-distance workflow and directly reads only the required columns from two combined sample-count CSVs. It does not depend on the legacy prepared table or heat-map workflow.
+- [Selection](./annotations/recorder_context_selection.csv): TadA–λN and TadA8.20, both at 250 nM, 37 °C, two hours; recorder 5′ of boxB; 10-nucleotide spacer. The existing annotations resolve the enzymes to samples i79_p3 and i79_p8, respectively. The four sites with no adjacent A in the reference recorder are A2 (UAG), A8 (UAC), A10 (CAC), and A13 (CAU). Each site is evaluated across all 16 mutated contexts, including contexts that introduce a neighboring A.
+- The five-base insert is stored in read orientation. RNA flanks use complementary conversion: A to U, C to G, G to C, and T to A. In the target_random_5 sublibrary, A2 uses insert indices 5/4 for its 5′/3′ flanks and count column `pos_7_C`; A8 uses 2/1 and `pos_4_C`. In target_random_3, A10 uses 5/4 and `pos_3_C`; A13 uses 3/2 and `pos_2_C`. Insert indices are one-based. These mappings match the recent context-distance and retained context analyses.
+- For each enzyme/site/context, all 64 combinations of the other three randomized bases are present. Each point is **100 × sum(edited UMIs) / sum(total UMIs)** across those 64 variants. Each bar is the equally weighted arithmetic mean of the four site percentages for that enzyme/context. Molecules are pooled within each site; the four sites contribute equal weight to the bar. No variant-level SD/SEM or inferential error bars are plotted.
+- All four flanking nucleotide identities remain separate, using observed sequences without correction for editing of randomized flanks. Positive-count and zero-edit variants remain included; no 50-UMI cutoff is applied. Raw variant coverage ranges from 2 to 392 UMIs across the selected samples/sublibraries, with coverage and low-count flags retained in the audit table.
+- The figure has two stacked panels with a shared y-axis scale, the shared label “Edited RNA percentage,” and one bottom context axis: TadA–λN in pink above TadA8.20 in green, with black enzyme titles above each panel. Each context has a light mean bar and four points, distinguished by site-specific markers and consistent horizontal offsets. The points represent recorder positions, not independent biological replicates; pairs of sites in a sublibrary reuse the same underlying molecule measurements.
+- Outputs overwrite the existing files: [8,192 site/variant audit rows](./tables/recorder_context_variants.csv), retaining counts and sequence identities, and [128 pooled site/context measurements](./tables/recorder_context_summary.csv), retaining numerator, denominator, variant count, and coverage. Plotting reads only the summary CSV and validates every fraction against its pooled counts.
+- Validation: an independent R calculation from the two sample-count CSVs reproduces both count totals and all 128 pooled fractions within 1e-12. Every enzyme/site/context group contains each possible three-base background exactly once. PNG/PDF were visually reviewed; all text is Helvetica at 7 points and PNG resolution is 96 DPI.
+- Figure artifacts: [PNG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.png?raw=1) and [PDF](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.pdf?raw=1).
+
+![Fixed-distance recorder context variants](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.png?raw=1)
+
 ## Preserved randomized-recorder analyses
 
 - The older [distance analysis](./scripts/plot_randomized_recorder_distance_legacy.R) and [randomized-context heatmap analysis](./scripts/plot_randomized_recorder_context_legacy.R) were extracted from the retired multi-panel script without changing their calculations. They retain their legacy output names and read the shared prepared table; they are reserved for a separate analysis pass.
@@ -109,6 +123,8 @@
 - Initial six-sample refactor elapsed times, including container startup: preparation 6.76 seconds; plotting 7.49 seconds. Peak memory was approximately 155 MiB and 200 MiB, respectively. These predate the two added time-course samples and are not runtime guarantees.
 
 ## Changelog
+
+- **2026-09-24:** Added direct preparation and plotting for the 250 nM TadA–λN/TadA8.20 context comparison at a fixed 10-nucleotide spacer, recorder 5′ of boxB. Each of 16 contexts shows pooled-UMI percentages for A2, A8, A10, and A13 plus their equally weighted mean bar. Added count audit tables, a shared “Edited RNA percentage” label, and enzyme panel titles; independently validated all 128 pooled points and all 32 mean bars.
 
 - **2026-09-24:** Made the upper-facet zero reference lines thinner, light gray, and dotted in Figure 2C and both supplementary concentration plots. Pixel comparisons confirm that the lower panels are unchanged; all numerical tables remain byte-identical.
 
