@@ -63,6 +63,27 @@
 
 ![Fixed-distance recorder context variants](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.png?raw=1)
 
+## Figure 2E: pooled four-site context heat maps
+
+- Adapts the recent [pooled-context workflow](./scripts/prepare_recorder_context_variants.py), reading the original count CSVs and reusing its sample/site mappings. [The Figure 2E selection](./annotations/fig2e_selection.csv) retains A2, A8, A10, and A13 for TadA–λN and TadA8.20 at 250 nM, 37 °C, two hours, across the four configurations used by the September 24 [Figure 2B preparation](./scripts/prepare_figure2b_recorder.py) and [Figure 2C workflow](./scripts/recorder_position_panel.R): recorder 5′ of boxB at 0 and 10 nucleotides, and 3′ at 20 and 30 nucleotides. Preparation verifies the same geometry set and 17-nucleotide recorder length against the boxB-variation library annotations. Barcode identities differ because this is the randomized-recorder library. The excluded boxB stem-window construct in Figure 2B/2C is not part of this library.
+- A2 (reference UAG) and A8 (UAC) use the 5′ randomized sublibrary; A10 (CAC) and A13 (CAU) use the 3′ randomized sublibrary. These are four distinct recorder sites, with two measured sites sharing molecules within each sublibrary. The 5′/3′ sublibrary labels describe randomized recorder segments, not recorder placement relative to boxB.
+- Each tile is **100 × summed edited counts / summed site-specific UMI coverage** across all four sites and four configurations. Each site/configuration contributes 64 sequence backgrounds, giving 1,024 site/variant measurements per tile. This is a coverage-weighted percentage of edited site observations, not the percentage of distinct RNA molecules with any edit. The denominator counts a molecule once for each evaluated site. All four observed flanking identities remain separate, without correction for editing of randomized flanks or a 50-UMI cutoff.
+- [Prepare and pool the measurements](./scripts/prepare_figure2e_context.py), then run [the adapted Figure 2E plotting script](./scripts/02_generate_figure2e_sequence_context.R). The [512-row site/configuration table](./tables/fig2e_site_summary.csv) retains individual measurements and barcodes; the [32-row plotting table](./tables/fig2e_context_summary.csv) retains selected sites, configurations, count totals, and full-precision fractions. Run from the repository root inside the analysis container:
+
+  ```bash
+  python analysis/boxb_in_vitro_sequencing/scripts/prepare_figure2e_context.py
+  Rscript analysis/boxb_in_vitro_sequencing/scripts/02_generate_figure2e_sequence_context.R
+  ```
+
+- Two side-by-side 4 × 4 heat maps use the shared Figure 2B/2C pink and green colors, a common percentage scale, and numerical tile labels. Rows are the 5′ flanking base; columns are the 3′ flanking base. Output names tentatively assign panel E; its letter is left for manuscript assembly. The existing Figure 2E PNG/PDF are replaced, with SVG added for assembly. The legacy heat-map source and rounded legacy table remain available separately.
+- Validation: an independent R calculation from the two original sample-count CSVs exactly reproduces the numerator and denominator of all 32 tiles. Every tile contains four sites, four configurations, and 1,024 site/variant observations. Total site coverage ranges from 38,120 to 96,113 per tile. Both color scales span 0–40%; text is Helvetica and the PNG is 96 DPI. The earlier fixed-context and distance plots and their source tables are unchanged.
+- The former 5′/10-nucleotide panel showed UAU editing of 23.50% for TadA–λN and 25.65% for TadA8.20, with UAU first at all four sites. These prior single-configuration results are distinct from the current four-configuration figure. The four sites and multiple configurations are not independent biological reaction replicates.
+- In the current four-configuration figure, UAU remains highest: 32.50% versus 20.78% for UAA with TadA–λN, and 34.56% versus 21.80% for UAA with TadA8.20. UAU remains first with equal site/configuration weighting, after omitting any one site, and after omitting any one configuration. The 128 overlapping measurements from each of the earlier fixed-context and distance summaries retain identical edited and total counts.
+- Values inside tiles indicate percent edited, rounded to the nearest integer. Color bars are omitted; both panels retain the same 0–40% color scale internally. The figure is 3.2 × 1.8 inches. Color intensities and the saved table retain full precision.
+- Figure artifacts: [PNG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2e.png?raw=1), [PDF](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2e.pdf?raw=1), and [SVG](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2e.svg?raw=1).
+
+![Figure 2E pooled four-site context heat maps](https://github.com/rasilab/bakker_2025/blob/master/analysis/boxb_in_vitro_sequencing/figures/fig2e.png?raw=1)
+
 ## Preserved randomized-recorder analyses
 
 - The older [distance analysis](./scripts/plot_randomized_recorder_distance_legacy.R) and [randomized-context heatmap analysis](./scripts/plot_randomized_recorder_context_legacy.R) were extracted from the retired multi-panel script without changing their calculations. They retain their legacy output names and read the shared prepared table; they are reserved for a separate analysis pass.
@@ -123,6 +144,8 @@
 - Initial six-sample refactor elapsed times, including container startup: preparation 6.76 seconds; plotting 7.49 seconds. Peak memory was approximately 155 MiB and 200 MiB, respectively. These predate the two added time-course samples and are not runtime guarantees.
 
 ## Changelog
+
+- **2026-09-25:** Finalized the four-site recorder-context heat map at 250 nM using the four Figure 2B/2C geometries. Added source-count preparation, site/configuration audit and full-precision plotting tables, verified all 32 tiles independently, and generated compact PNG/PDF/SVG outputs with integer percentages and no color bars.
 
 - **2026-09-24:** Added direct preparation and plotting for the 250 nM TadA–λN/TadA8.20 context comparison at a fixed 10-nucleotide spacer, recorder 5′ of boxB. Each of 16 contexts shows pooled-UMI percentages for A2, A8, A10, and A13 plus their equally weighted mean bar. Added count audit tables, a shared “Edited RNA percentage” label, and enzyme panel titles; independently validated all 128 pooled points and all 32 mean bars.
 
