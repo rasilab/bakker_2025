@@ -1,4 +1,4 @@
-"""Prepare Figure 2B recorder and its time-course supplement; run from the repository root."""
+"""Prepare Recorder edit summary recorder and its time-course supplement; run from the repository root."""
 
 import os
 
@@ -24,7 +24,7 @@ time_concentration = "250nM"
 time_order = ["37_30min", "37_1hr", "37_2hr"]
 # One processing pass serves both figures; each has its own correction family.
 panel_definitions = [
-    ("fig2b_recorder", ["tada_type", "tada_conc", "edit_type"], 6),
+    ("recorder_edit_summary", ["tada_type", "tada_conc", "edit_type"], 6),
     ("supp_recorder_time", ["tada_type", "tada_conc", "condition", "edit_type"], 3),
 ]
 excluded_layout = "spacer5_0"
@@ -32,7 +32,7 @@ excluded_window = "1_3"
 layout_pattern = r"^(spacer[35]_(?:0|10))"
 expected_pairs = 15
 edit_columns = [f"num_{number}_C" for number in range(1, 8)]
-round_columns = [
+statistic_columns = [
     "mut_mean_percent", "mut_se_percent", "wt_mean_percent", "wt_se_percent",
     "difference_percentage_points", "fold_change",
 ]
@@ -118,7 +118,7 @@ if (len(construct_counts) != len(samples) * len(edit_order) * len(insert_order)
 os.makedirs(output_directory, exist_ok=True)
 for panel_name, group_columns, expected_samples in panel_definitions:
     output_prefix = f"{output_directory}/{panel_name}"
-    if panel_name == "fig2b_recorder":
+    if panel_name == "recorder_edit_summary":
         panel_constructs = constructs.loc[
             constructs["condition"].eq(selected_condition)
         ].drop(columns="condition").copy()
@@ -166,17 +166,14 @@ for panel_name, group_columns, expected_samples in panel_definitions:
     statistics = statistics.rename(columns={
         f"{stem}_{measure}": f"{stem}_{measure}_percent"
         for stem in insert_order for measure in ["mean", "se"]
-    })[group_columns + ["n_pairs"] + round_columns + ["p_value", "p_adjusted_bh", "significance"]]
+    })[group_columns + ["n_pairs"] + statistic_columns + ["p_value", "p_adjusted_bh", "significance"]]
     if (len(summary) != expected_samples * len(edit_order) * len(insert_order)
             or len(statistics) != expected_samples * len(edit_order)
-            or not np.isfinite(statistics[round_columns].to_numpy()).all()):
+            or not np.isfinite(statistics[statistic_columns].to_numpy()).all()):
         raise ValueError(f"Unexpected or non-finite summaries for {panel_name}")
 
     panel_constructs.sort_values(group_columns + ["pair_id", "insert_type"]).to_csv(f"{output_prefix}_constructs.csv", index=False)
     summary.to_csv(f"{output_prefix}_plot_data.csv", index=False)
-    statistics.to_csv(f"{output_prefix}_statistics_full.csv", index=False)
-    # Preserve the original main-figure summary schemas and rounded exports.
-    if panel_name == "fig2b_recorder":
-        summary.round({"mean": 2, "se": 2}).to_csv(f"{output_prefix}.csv", index=False)
-        statistics.round(dict.fromkeys(round_columns, 2)).to_csv(f"{output_prefix}_statistics.csv", index=False)
+    statistics_suffix = "statistics" if panel_name == "recorder_edit_summary" else "statistics_full"
+    statistics.to_csv(f"{output_prefix}_{statistics_suffix}.csv", index=False)
     print(f"{panel_name}: wrote {len(panel_constructs)} measurements, {len(summary)} means, and {len(statistics)} comparisons")

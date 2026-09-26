@@ -42,10 +42,9 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 
 | Figure Panel      | Folder                                           |
 | :---------------- | :----------------------------------------------- |
-| 2B                | [Recorder preparation and plotting](./analysis/boxb_in_vitro_sequencing/README.md) |
-| 2C                | [WT/MUT recorder positions by distance](./analysis/boxb_in_vitro_sequencing/README.md#figure-2c-recorder-positions) |
-| 2D (old)          | Retired single-enzyme recorder-position plot; replaced by Figure 2C |
-| 2E                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
+| Recorder edit summary | [Preparation and plotting](./analysis/boxb_in_vitro_sequencing/README.md#recorder-edit-summary) |
+| Recorder sites and distances | [Distance-resolved editing](./analysis/boxb_in_vitro_sequencing/README.md#recorder-sites-and-distances) |
+| Recorder context heat map | [Pooled sequence contexts](./analysis/boxb_in_vitro_sequencing/README.md#recorder-context-heat-map) |
 | 3B                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
 | 3C                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
 | 3D                | /boxb_in_vitro_sequencing/generate_figures.ipynb |
@@ -79,6 +78,8 @@ Together, our results establish RNA recording as a versatile and scalable tool f
 | S5B               | /ln_dms_sequencing/generate_figures.ipynb        |
 
 ## Changelog
+
+- 2026-09-26: Consolidated the three recorder plots under descriptive filenames and removed obsolete Figure 2 artifacts; preserved Figure 3/4 loop plots and later analyses.
 
 - 2026-09-23: Removed the aggregate Figure 2B loop analysis, retained the recorder comparison layout, and renamed the remaining Figure 2 script for clarity.
 - 2026-09-22: Updated the Figure 2B loop analysis with the same complete-pair filtering, paired tests, and compact manuscript formatting as the recorder panel.

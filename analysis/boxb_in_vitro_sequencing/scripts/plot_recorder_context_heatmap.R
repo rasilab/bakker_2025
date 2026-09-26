@@ -1,11 +1,11 @@
-# Plot Figure 2E from pooled count summaries; run from the repository root.
+# Plot Recorder context heat map from pooled count summaries; run from the repository root.
 suppressPackageStartupMessages(library(tidyverse))
 source("analysis/boxb_in_vitro_sequencing/scripts/recorder_plot_style.R")
 grDevices::pdf(NULL)
 
 analysis_directory <- "analysis/boxb_in_vitro_sequencing"
-input_table <- file.path(analysis_directory, "tables/fig2e_context_summary.csv")
-output_prefix <- file.path(analysis_directory, "figures/fig2e")
+input_table <- file.path(analysis_directory, "tables/recorder_context_heatmap.csv")
+output_prefix <- file.path(analysis_directory, "figures/recorder_context_heatmap")
 font_family <- "Helvetica"
 font_size <- 7
 figure_width <- 3.2
@@ -70,12 +70,12 @@ for (i in seq_len(nrow(identity))) {
          title = choice$enzyme_label) +
     heatmap_theme
 }
-figure_2e <- cowplot::plot_grid(plotlist = panels, nrow = 1, align = "h", axis = "tb")
-ggsave(paste0(output_prefix, ".png"), figure_2e, width = figure_width,
+context_heatmap <- cowplot::plot_grid(plotlist = panels, nrow = 1, align = "h", axis = "tb")
+ggsave(paste0(output_prefix, ".png"), context_heatmap, width = figure_width,
        height = figure_height, dpi = 96, bg = "white")
-ggsave(paste0(output_prefix, ".pdf"), figure_2e, width = figure_width,
+ggsave(paste0(output_prefix, ".pdf"), context_heatmap, width = figure_width,
        height = figure_height, device = cairo_pdf, bg = "transparent")
-ggsave(paste0(output_prefix, ".svg"), figure_2e, width = figure_width,
+ggsave(paste0(output_prefix, ".svg"), context_heatmap, width = figure_width,
        height = figure_height, device = grDevices::svg, bg = "transparent")
-cat("Figure 2E: shared 0–", scale_max, "% scale; ", nrow(summary), " tiles\n", sep = "")
+cat("Recorder context heat map: shared 0–", scale_max, "% scale; ", nrow(summary), " tiles\n", sep = "")
 print(file.info(paste0(output_prefix, c(".png", ".pdf", ".svg")))$size)

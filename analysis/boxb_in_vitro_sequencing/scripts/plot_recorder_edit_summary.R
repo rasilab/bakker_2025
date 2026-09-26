@@ -1,4 +1,4 @@
-# Plot Figure 2B from prepared CSV tables. Run from the repository root.
+# Plot Recorder edit summary from prepared CSV tables. Run from the repository root.
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -10,20 +10,20 @@ source("analysis/boxb_in_vitro_sequencing/scripts/recorder_plot_style.R")
 # Keep layout calculations from creating an unintended Rplots.pdf.
 grDevices::pdf(NULL)
 analysis_directory <- "analysis/boxb_in_vitro_sequencing"
-summary_file <- file.path(analysis_directory, "tables/fig2b_recorder_plot_data.csv")
-statistics_file <- file.path(analysis_directory, "tables/fig2b_recorder_statistics_full.csv")
-output_png <- file.path(analysis_directory, "figures/fig2b_recorder.png")
-output_pdf <- file.path(analysis_directory, "figures/fig2b_recorder.pdf")
+summary_file <- file.path(analysis_directory, "tables/recorder_edit_summary_plot_data.csv")
+statistics_file <- file.path(analysis_directory, "tables/recorder_edit_summary_statistics.csv")
+output_png <- file.path(analysis_directory, "figures/recorder_edit_summary.png")
+output_pdf <- file.path(analysis_directory, "figures/recorder_edit_summary.pdf")
 figure_width <- 4.5
 figure_height <- 2.5
-figure2b_font_family <- "Helvetica"
-figure2b_font_size <- 7
-figure2b_axis_color <- recorder_axis_color
-figure2b_concentration_order <- c("125nM", "250nM", "500nM")
-figure2b_enzyme_order <- c("lambdaN", "tada_only")
+edit_summary_font_family <- "Helvetica"
+edit_summary_font_size <- 7
+edit_summary_axis_color <- recorder_axis_color
+edit_summary_concentration_order <- c("125nM", "250nM", "500nM")
+edit_summary_enzyme_order <- c("lambdaN", "tada_only")
 enzyme_labels <- c("tada_only" = "TadA8.20", "lambdaN" = "TadA–λN")
-figure2b_edit_order <- c("frac_1edit", "frac_2edit")
-figure2b_insert_order <- c("wt", "mut")
+edit_summary_edit_order <- c("frac_1edit", "frac_2edit")
+edit_summary_insert_order <- c("wt", "mut")
 star_offset <- 0.04
 fold_offset <- 0.17
 
@@ -38,45 +38,45 @@ bar_colors <- c(
   "tada_only_frac_2edit_wt" = unname(recorder_distance_colors["tada_only_20"])
 )
 
-theme_figure2b <- theme_classic(base_family = figure2b_font_family,
-                                base_size = figure2b_font_size) +
+theme_edit_summary <- theme_classic(base_family = edit_summary_font_family,
+                                base_size = edit_summary_font_size) +
   theme(
-    text = element_text(size = figure2b_font_size, family = figure2b_font_family),
-    axis.text = element_text(size = figure2b_font_size, family = figure2b_font_family,
+    text = element_text(size = edit_summary_font_size, family = edit_summary_font_family),
+    axis.text = element_text(size = edit_summary_font_size, family = edit_summary_font_family,
                              color = "black"),
-    axis.title = element_text(size = figure2b_font_size, family = figure2b_font_family,
+    axis.title = element_text(size = edit_summary_font_size, family = edit_summary_font_family,
                               color = "black"),
-    strip.text = element_text(size = figure2b_font_size, family = figure2b_font_family,
+    strip.text = element_text(size = edit_summary_font_size, family = edit_summary_font_family,
                               color = "black"),
     panel.spacing.x = unit(0.2, "lines"),
     panel.spacing.y = unit(0.8, "lines"),
-    axis.line = element_line(linewidth = recorder_axis_width, color = figure2b_axis_color),
-    axis.ticks = element_line(linewidth = recorder_axis_width, color = figure2b_axis_color),
+    axis.line = element_line(linewidth = recorder_axis_width, color = edit_summary_axis_color),
+    axis.ticks = element_line(linewidth = recorder_axis_width, color = edit_summary_axis_color),
     axis.ticks.x = element_blank(),
     axis.ticks.length = unit(2, "pt"),
-    axis.text.x = element_text(size = 6, family = figure2b_font_family,
+    axis.text.x = element_text(size = 6, family = edit_summary_font_family,
                                lineheight = 0.85, margin = margin(t = 2)),
     strip.background = element_blank(),
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
-    plot.title = element_text(size = figure2b_font_size, hjust = 0.5),
+    plot.title = element_text(size = edit_summary_font_size, hjust = 0.5),
     plot.margin = margin(2, 2, 2, 2, "mm")
   )
 
 # Only small prepared tables are read here; no biological filtering or tests.
 mean_editing_per_concentration <- read_csv(summary_file, show_col_types = FALSE) %>%
   mutate(
-    tada_type = factor(tada_type, levels = figure2b_enzyme_order),
-    tada_conc = factor(tada_conc, levels = figure2b_concentration_order),
-    edit_type = factor(edit_type, levels = figure2b_edit_order),
-    insert_type = factor(insert_type, levels = figure2b_insert_order)
+    tada_type = factor(tada_type, levels = edit_summary_enzyme_order),
+    tada_conc = factor(tada_conc, levels = edit_summary_concentration_order),
+    edit_type = factor(edit_type, levels = edit_summary_edit_order),
+    insert_type = factor(insert_type, levels = edit_summary_insert_order)
   )
 statistics <- read_csv(statistics_file, show_col_types = FALSE) %>%
   mutate(
-    tada_type = factor(tada_type, levels = figure2b_enzyme_order),
-    tada_conc = factor(tada_conc, levels = figure2b_concentration_order),
-    edit_type = factor(edit_type, levels = figure2b_edit_order)
+    tada_type = factor(tada_type, levels = edit_summary_enzyme_order),
+    tada_conc = factor(tada_conc, levels = edit_summary_concentration_order),
+    edit_type = factor(edit_type, levels = edit_summary_edit_order)
   )
 stopifnot(nrow(mean_editing_per_concentration) == 24, nrow(statistics) == 12,
           !anyNA(mean_editing_per_concentration), !anyNA(statistics))
@@ -101,7 +101,7 @@ fold_change_df <- stat_data %>%
 
 # Each column has its own y-scale, shared between its two enzyme facets.
 concentration_panels <- list()
-for (concentration in figure2b_concentration_order) {
+for (concentration in edit_summary_concentration_order) {
   panel_data <- mean_editing_per_concentration %>% filter(tada_conc == concentration)
   panel_statistics <- stat_data %>% filter(tada_conc == concentration, significance != "ns")
   panel_folds <- fold_change_df %>% filter(tada_conc == concentration)
@@ -117,18 +117,18 @@ for (concentration in figure2b_concentration_order) {
     scale_x_discrete(labels = c("frac_1edit" = "WT    MUT\n1 edit",
                                 "frac_2edit" = "WT    MUT\n2+ edits")) +
     scale_fill_manual(values = bar_colors, guide = "none") +
-    labs(x = NULL, y = if (concentration == figure2b_concentration_order[1]) "% Edited RNA" else NULL,
+    labs(x = NULL, y = if (concentration == edit_summary_concentration_order[1]) "% Edited RNA" else NULL,
          title = sub("nM", " nM", concentration)) +
-    theme_figure2b +
-    theme(strip.text.y.right = if (concentration == tail(figure2b_concentration_order, 1))
-            element_text(angle = -90, size = figure2b_font_size,
-                         family = figure2b_font_family, color = "black") else element_blank()) +
+    theme_edit_summary +
+    theme(strip.text.y.right = if (concentration == tail(edit_summary_concentration_order, 1))
+            element_text(angle = -90, size = edit_summary_font_size,
+                         family = edit_summary_font_family, color = "black") else element_blank()) +
     stat_pvalue_manual(data = panel_statistics,
                       x = "edit_type", y.position = "y.position", label = "significance",
                       tip.length = 0.01, size = 5 / .pt, inherit.aes = FALSE) +
     geom_text(data = panel_folds, aes(x = edit_type, y = y.position, label = label),
-              inherit.aes = FALSE, size = figure2b_font_size / .pt,
-              family = figure2b_font_family)
+              inherit.aes = FALSE, size = edit_summary_font_size / .pt,
+              family = edit_summary_font_family)
   concentration_panels[[concentration]] <- ggplotGrob(p)
 }
 p_concentration <- cowplot::plot_grid(plotlist = concentration_panels, nrow = 1,
@@ -139,4 +139,4 @@ ggsave(output_png, p_concentration,
 ggsave(output_pdf, p_concentration,
        width = figure_width, height = figure_height, device = cairo_pdf, bg = "white")
 
-cat("Figure 2B plotting complete!\n")
+cat("Recorder edit summary plotting complete!\n")

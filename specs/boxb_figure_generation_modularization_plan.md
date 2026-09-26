@@ -1,5 +1,7 @@
 # BoxB Figure Generation Script Modularization Plan
 
+- Status (2026-09-26): historical plan. The recorder portion is superseded by the [current workflows](../analysis/boxb_in_vitro_sequencing/README.md) and [approved cleanup audit](./recorder_figure_cleanup_audit.md). Later-figure refactoring remains separate.
+
 ## Executive Summary
 
 The `analysis/boxb_in_vitro_sequencing/scripts/generate_figures.R` script is a large monolithic file (1,129 lines) that performs data loading, statistical analysis, and figure generation for BoxB hairpin *in vitro* sequencing analysis. This plan outlines how to split it based on **figure-specific data dependencies** into 5 focused modules that can run independently and quickly.

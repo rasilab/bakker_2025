@@ -1,0 +1,156 @@
+path,action,proposed_path,tracked,bytes,reason
+analysis/boxb_in_vitro_sequencing/README.md,edited,,True,33670,Remove only obsolete main Figure 2 blocks or documentation; preserve later-figure dependencies
+analysis/boxb_in_vitro_sequencing/ai/plans/figure2c-tac-context-spacer-scan.md,removed,,False,7317,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/annotations/ReadME_annotations.md,preserve,,True,1685,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/barcode_annotations.csv,preserve,,True,10239,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/fig2e_selection.csv,renamed,analysis/boxb_in_vitro_sequencing/annotations/recorder_context_heatmap_selection.csv,True,541,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/annotations/fig2e_validation_geometries.csv,archived,,False,46,Retain scientific validation separately from the three plotting workflows
+analysis/boxb_in_vitro_sequencing/annotations/fig2e_workflow_positions.csv,removed,,False,290,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/annotations/fig2e_workflow_steps.csv,removed,,False,2584,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/annotations/hairpin_annotations.tsv,preserve,,True,27281,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/literature_values.csv,preserve,,True,1228,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/recorder_context_distance_panels.csv,removed,,False,717,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/annotations/recorder_context_selection.csv,preserve,,True,815,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/recorder_positions.csv,preserve,,True,159,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/sample_annotations.csv,preserve,,True,1454,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/annotations/sample_info.csv,preserve,,True,2162,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/fig2e_workflow.md,removed,,False,9906,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2b_recorder.pdf,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_edit_summary.pdf,True,17579,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2b_recorder.png,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_edit_summary.png,True,14803,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2c.pdf,removed,,True,18304,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2c_recorder_positions.pdf,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_site_distance.pdf,True,30137,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2c_recorder_positions.png,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_site_distance.png,True,26335,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2c_tac_context_spacer_scan.pdf,removed,,False,46552,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2c_tac_context_spacer_scan.png,removed,,False,47555,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2e.pdf,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_context_heatmap.pdf,True,15961,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2e.png,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_context_heatmap.png,True,8631,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2e.svg,renamed,analysis/boxb_in_vitro_sequencing/figures/recorder_context_heatmap.svg,True,56914,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/figures/fig2e_workflow.pdf,removed,,False,39072,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2e_workflow.png,removed,,False,123545,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig2e_workflow.svg,removed,,False,21999,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/fig3b.pdf,preserve,,True,24758,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig3c_3f.pdf,preserve,,True,12300,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig3i_3j.pdf,preserve,,True,15788,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig3i_3j_lambdan_tada_comparison.pdf,preserve,,True,7407,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4a.pdf,preserve,,True,24017,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4a.png,preserve,,True,85983,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4a_loop_concentration.pdf,preserve,,True,15873,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4d.pdf,preserve,,True,38410,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4e.pdf,preserve,,True,12988,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/fig4f.pdf,preserve,,True,14499,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_combined.pdf,preserve,,True,10799,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_combined.png,preserve,,True,174685,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_loop.pdf,preserve,,True,6463,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_loop.png,preserve,,True,61738,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_recorder.pdf,preserve,,True,8306,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/individual_edit_distribution_recorder.png,preserve,,True,92369,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/recorder_context_distance.pdf,removed,,False,42509,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/recorder_context_distance.png,removed,,False,54866,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.pdf,removed,,True,19094,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/recorder_context_variants.png,removed,,True,26534,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/spacer_scan_all_conditions.pdf,removed,,False,87499,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/spacer_scan_all_conditions.png,removed,,False,73484,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_125nM.pdf,preserve,,True,30164,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_125nM.png,preserve,,True,25483,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.pdf,preserve,,True,30214,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_positions_500nM.png,preserve,,True,27785,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_time.pdf,preserve,,True,11861,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/figures/supp_recorder_time.png,preserve,,True,8388,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/01_prepare_data.R,preserve,,True,2727,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/02_generate_figure2e_sequence_context.R,renamed,analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_context_heatmap.R,True,4246,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/02_generate_spacer_scan_all_conditions.R,removed,,False,5748,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/02_generate_spacer_scan_all_conditions.py,removed,,False,7093,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/02_plot_figure2c_tac_context.py,removed,,False,5136,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/02_plot_spacer_scan.py,removed,,False,5301,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/02_summarize_figure2c_tac_context.py,removed,,False,9119,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/02_summarize_spacer_scan.py,removed,,False,3153,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/03_generate_figure3.R,preserve,,True,12441,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/03_generate_figure3_tada_comparison.R,preserve,,False,6414,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/04_generate_figure4_recruitment.R,preserve,,True,21297,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/05_generate_individual_edit_plots.R,preserve,,False,13952,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/05_generate_supplementary_figures.R,preserve,,True,7113,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/calculate_boxb_loop_editing.py,preserve,,True,6001,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/calculate_summary_stats_for_each_barcode.py,preserve,,True,5620,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/check_figure2e_geometry.py,archived,,False,8962,Retain scientific validation separately from the three plotting workflows
+analysis/boxb_in_vitro_sequencing/scripts/cluster.yaml,preserve,,True,118,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/combine_barcode_summary_stats.R,preserve,,True,579,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/combine_barcode_summary_stats.ipynb,preserve,,True,1800,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/document_fig2e_workflow.py,removed,,False,9816,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/generate_figures.R,edited,,True,59028,Remove only obsolete main Figure 2 blocks or documentation; preserve later-figure dependencies
+analysis/boxb_in_vitro_sequencing/scripts/generate_figures.ipynb,edited,,True,625129,Remove only obsolete main Figure 2 blocks or documentation; preserve later-figure dependencies
+analysis/boxb_in_vitro_sequencing/scripts/plot_figure2b_recorder.R,renamed,analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_edit_summary.R,True,7517,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/plot_figure2c_recorder_positions.R,renamed,analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_site_distance.R,True,549,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/plot_randomized_recorder_context_legacy.R,removed,,True,4759,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/plot_randomized_recorder_distance_legacy.R,removed,,True,2022,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_context_distance.py,removed,,False,6626,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_context_variants.py,removed,,True,5657,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/plot_recorder_time.R,preserve,,True,5887,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/prepare_figure2b_recorder.py,renamed,analysis/boxb_in_vitro_sequencing/scripts/prepare_recorder_edit_summary.py,True,9764,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/prepare_figure2e_context.py,renamed,analysis/boxb_in_vitro_sequencing/scripts/prepare_recorder_context_heatmap.py,True,9381,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/prepare_recorder_context_distance.py,removed,,False,8534,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/prepare_recorder_context_variants.py,removed,,True,8008,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/scripts/recorder_plot_style.R,preserve,,True,2024,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/recorder_position_panel.R,renamed,analysis/boxb_in_vitro_sequencing/scripts/recorder_site_distance_panel.R,True,8340,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/scripts/run_analysis.smk,preserve,,True,5341,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/split_by_barcode.awk,preserve,,True,2648,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/submit_cluster.sh,preserve,,True,247,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/scripts/submit_local.sh,preserve,,True,128,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/boxb_wt_mut_stems.csv,preserve,,True,135,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/constants.csv,preserve,,False,86,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/constants_processed.csv,preserve,,False,143,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/editing_per_loop_variant.tsv,preserve,,False,89829,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig2b_recorder.csv,removed,,True,1084,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2b_recorder_constructs.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_edit_summary_constructs.csv,True,46236,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2b_recorder_plot_data.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_edit_summary_plot_data.csv,True,1719,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2b_recorder_statistics.csv,removed,,True,1433,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2b_recorder_statistics_full.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_edit_summary_statistics.csv,True,2393,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2c_plot_data.csv,removed,,True,2192,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2c_recorder_positions.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_site_distance.csv,True,8296,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2c_tac_context_summary.csv,removed,,False,147672,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2c_tac_context_variant_data.csv,removed,,False,8758327,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2e_context_summary.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_context_heatmap.csv,True,5777,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2e_plot_data.csv,removed,,True,454,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2e_site_summary.csv,renamed,analysis/boxb_in_vitro_sequencing/tables/recorder_context_heatmap_sites.csv,True,87503,Retained main plot; remove panel numbering from filenames and references
+analysis/boxb_in_vitro_sequencing/tables/fig2e_validation_comparison.csv,archived,,False,1056,Retain scientific validation separately from the three plotting workflows
+analysis/boxb_in_vitro_sequencing/tables/fig2e_validation_contexts.csv,archived,,False,8087,Retain scientific validation separately from the three plotting workflows
+analysis/boxb_in_vitro_sequencing/tables/fig2e_validation_sites.csv,archived,,False,33157,Retain scientific validation separately from the three plotting workflows
+analysis/boxb_in_vitro_sequencing/tables/fig2e_workflow_audit.csv,removed,,False,276,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig2e_workflow_tile_audit.csv,removed,,False,1502,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/fig3b_plot_data.csv,preserve,,True,5608,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig3c_3f_plot_data.csv,preserve,,True,15228,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig3i_3j_lambdan_tada_comparison_data.csv,preserve,,False,55381,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig3i_3j_plot_data.csv,preserve,,True,22205,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig4a_loop_plot_data.csv,preserve,,True,631,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig4a_recorder_plot_data.csv,preserve,,True,603,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig4d_plot_data.csv,preserve,,True,6250,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig4e_plot_data.csv,preserve,,True,1293,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig4f_plot_data.csv,preserve,,True,16985,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/fig_2c_data.tsv,removed,,False,1695,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/hairpin_annotations.csv,preserve,,False,27272,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/individual_a_editing_context_constant.tsv,preserve,,False,2328,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/individual_a_editing_context_variable.tsv,removed,,False,972,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/individual_edit_loop_data.csv,preserve,,False,1100,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/individual_edit_recorder_data.csv,preserve,,False,1978,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/loop_data.csv,preserve,,False,7366792570,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/loop_data_processed.csv,preserve,,False,396339625,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/loop_data_sample.csv,preserve,,False,3300816,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/mean_editing_per_boxb_variants_wide.tsv,preserve,,False,211413,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/mean_editing_per_loop_variant.tsv,preserve,,False,288158,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/mean_editing_per_recruitment_type.tsv,preserve,,False,183,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/mean_editing_per_stem_variant.tsv,preserve,,False,116654,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/mean_editing_recorder_position.tsv,removed,,False,1695,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/oligos_forward.csv,preserve,,False,10223,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/oligos_reverse_complement.csv,preserve,,False,10223,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/recorder_context_distance_summary.csv,removed,,False,193189,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/recorder_context_summary.csv,removed,,True,21386,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/recorder_context_variants.csv,removed,,True,1379194,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/spacer_scan_all_conditions.csv,removed,,False,37553,Superseded recorder analysis or redundant export; archive uncommitted work before removal
+analysis/boxb_in_vitro_sequencing/tables/supp_recorder_positions_125nM.csv,preserve,,True,8345,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/supp_recorder_positions_500nM.csv,preserve,,True,8221,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/supp_recorder_time_constructs.csv,preserve,,True,24024,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/supp_recorder_time_plot_data.csv,preserve,,True,975,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/supp_recorder_time_statistics_full.csv,preserve,,True,1350,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/target_data.csv,preserve,,False,547450623,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/target_data_processed.csv,preserve,,False,547425503,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/wildtype_boxb_random_inserts.csv,preserve,,False,83,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"
+analysis/boxb_in_vitro_sequencing/tables/wildtype_target_random_inserts.csv,preserve,,False,42,"Shared input, subsequent figure, supplement, or outside the three-main-plot cleanup"

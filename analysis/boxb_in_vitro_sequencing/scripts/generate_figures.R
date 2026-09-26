@@ -66,29 +66,6 @@ wildtype_target_random_inserts <- barcode_annotations  %>%
   print()
 
 
-options(repr.plot.width = 8, repr.plot.height = 5)
-raw_data <- target_data  %>%
-  filter(variable_type=="target", g_depleted=="no",sample_id %in% c("i79_p3")) %>%
-  mutate(across(matches("num_._c"), ~ round(.x / umi_counts, 5), .names = "fraction_{col}")) %>%
-  mutate(fraction_edited=1-fraction_num_0_c)%>%
-  print()
-
-
-mean_editing_recorder_position<- raw_data %>%
-  select(target_dist,target_pos_to_boxb, matches("fraction_")) %>%
-  group_by(target_pos_to_boxb,target_dist) %>%
-  summarize(mean=mean(fraction_edited),
-  se=sd(fraction_edited)/sqrt(n()),
-  n=n(),
-  .groups = "drop")%>%
-  mutate(absolute_dist=case_when(
-    target_pos_to_boxb=="5" ~ 30-target_dist,
-    target_pos_to_boxb=="3" ~ target_dist
-  ))%>%
-  print()
-
-  write_tsv(mean_editing_recorder_position,"../tables/mean_editing_recorder_position.tsv")
-
 options(repr.plot.width = 6, repr.plot.height = 3)
 position_labs=c("7"="UAG",
 "6"="GAA",
@@ -122,67 +99,6 @@ individual_a_editing_context_constant <- target_data  %>%
   print()
 
 write_tsv(individual_a_editing_context_constant,"../tables/individual_a_editing_context_constant.tsv")
-
-context_data <- target_data %>%
-    filter(sample_id=="i79_p3",variable_type=="target",target_pos_to_boxb=="5") %>%
-    mutate(across(matches("pos_._c"),~.x/umi_counts,.names="fraction_{col}"))%>%
-    select(insert,variable_subpos,umi_counts,starts_with("fraction_"))%>%
-    filter(umi_counts>50)%>%
-    group_by(insert,variable_subpos)%>%
-    summarize(across(starts_with("fraction_"),~mean(.x),.names="mean_{col}"),
-    across(starts_with("fraction_"),~sd(.x)/sqrt(n()),.names="se_{col}"),
-    .groups="drop")%>%
-    print()
-
-five_prime_variable <- context_data %>%
-    filter(variable_subpos=="5")%>%
-    select(insert,variable_subpos,mean_fraction_pos_7_c,mean_fraction_pos_4_c)%>%
-    mutate(
-        fiveprime_7=str_sub(insert,5,5),
-        threeprime_7=str_sub(insert,4,4),
-        fiveprime_4=str_sub(insert,2,2),
-        threeprime_4=str_sub(insert,1,1),
-        across(matches("prime"),~case_when(
-        .x %in% c("T","C") ~ "R",
-        .x=="A" ~ "U",
-        .x=="G" ~ "C"),
-        .names="{col}_id")
-    ) %>%
-    select(starts_with("mean"),ends_with("_id"))%>%
-    pivot_longer(
-        cols=everything(),
-        names_to = c(".value", "position"),
-        names_pattern = "(.*)_(\\d+)" 
-    )%>%
-    group_by(position,fiveprime,threeprime)%>%
-    summarize(mean=mean(mean_fraction_pos))
-
-individual_a_editing_context_variable <- context_data %>%
-    filter(variable_subpos=="3")%>%
-    select(insert,variable_subpos,mean_fraction_pos_3_c,mean_fraction_pos_2_c)%>%
-    mutate(
-        fiveprime_3=str_sub(insert,5,5),
-        threeprime_3=str_sub(insert,4,4),
-        fiveprime_2=str_sub(insert,3,3),
-        threeprime_2=str_sub(insert,2,2),
-        across(matches("prime"),~case_when(
-        .x %in% c("T","C") ~ "R",
-        .x=="A" ~ "U",
-        .x=="G" ~ "C"),
-        .names="{col}_id")
-    ) %>%
-    select(starts_with("mean"),ends_with("_id"))%>%
-    pivot_longer(
-        cols=everything(),
-        names_to = c(".value", "position"),
-        names_pattern = "(.*)_(\\d+)" 
-    )%>%
-    group_by(position,fiveprime,threeprime)%>%
-    summarize(mean=mean(mean_fraction_pos))%>%
-    bind_rows(five_prime_variable)%>%
-    print()
-
-write_tsv(individual_a_editing_context_variable,"../tables/individual_a_editing_context_variable.tsv")
 
 stats_per_boxb_insert <- target_data %>%
     filter(variable_type=="boxb", sample_id %in% c("i79_p3","i79_p10","i79_p20","i79_p3","i79_p4","i79_p8")) %>%
@@ -439,73 +355,6 @@ mean_edits_single_flanking_context_variable <- context_data %>%
     print()
 
 write_tsv(mean_edits_single_flanking_context_variable,"../tables/mean_edits_single_flanking_context_variable.tsv")
-
-# Fixed-recorder Figure 2B: plot_figure2b_recorder.R
-
-mean_editing_recorder_position  %>% write_tsv("../tables/fig_2c_data.tsv")
-
-mean_editing_recorder_position  %>%
-  ggplot(aes(x = absolute_dist, y = mean*100,color=target_pos_to_boxb)) + 
-  # facet_wrap(~target_pos_to_boxb,ncol=1)+
-  geom_point() +
-  geom_errorbar(aes(ymin = (mean - se)*100, ymax = (mean + se)*100), width = 0.25) +
-  scale_y_continuous(limits = c(0, 60)) +
-  guides(color="none")+
-  theme(
-      plot.title = element_text(size = 18, face = "bold"),
-      axis.title = element_text(size = 8),
-      axis.text = element_text(size = 8),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 8),
-      axis.line = element_line(color = "grey")
-    )+
-    labs(x = "Recorder Position (nt)", y = "Percent Edited")
-
-ggsave("../figures/boxb_distance.pdf",height = 1.25,width = 4)
-
-position_labs=c("7"="UAG",
-"6"="GAA",
-"5"="AAU",
-"4"= "UAC",
-"3"= "CAC",
-"2"= "CAU",
-"1"= "UAA",
-"0"= "AAU"
-)
-position_order=c("7","6","5","4","3","2","1","0")
-
-# Recorder-position WT/MUT comparison: plot_figure2c_recorder_positions.R
-
-options(repr.plot.width = 10, repr.plot.height = 3)
-subset_position_labs=c("7"="UAG",
-"4"= "UAC",
-"3"= "CAC",
-"2"= "CAU"
-)
-subset_position_order=c("7","4","3","2")
-
-figure_2e <- individual_a_editing_context_variable %>%
-    ggplot(aes(y=fiveprime,x=threeprime,fill=mean*100))+
-    facet_wrap(~factor(position,level=subset_position_order),labeller=as_labeller(subset_position_labs),nrow=1)+
-    geom_tile()+
-    scale_fill_gradient(
-        name="Percent\nEdited",
-        low = "grey93", high = "black",
-        limits = c(0, 48),
-        guide = guide_colorbar(barwidth = 0.5, barheight = 3, ticks.colour = "black"), na.value = "red")+
-    theme(
-        axis.title.x = element_text(margin = margin(t = 4)),
-        axis.line = element_blank(),
-        axis.title = element_text(size = 8),
-        axis.text = element_text(size = 8),
-        legend.title = element_text(size = 8,hjust=0.5),
-        legend.text = element_text(size = 8),
-        strip.text.x=element_text(size=8)
-        )+
-        labs(y = "5' Flanking\n Base", x = "3' Flanking Base"
-         )
-
-# ggsave("../figures/context_variable.pdf",height = 1.2,width = 3.5)
 
 editing_per_loop_variant %>%
     filter(tada_type=="lambdaN",tada_conc=="250nM")%>%

@@ -1,4 +1,4 @@
-"""Pool four recorder sites across the same four geometries as Figure 2B/2C."""
+"""Pool four recorder sites across the same four geometries as Recorder edit summary/2C."""
 
 import itertools
 import numpy as np
@@ -6,14 +6,14 @@ import pandas as pd
 
 # Run from the repository root; reuse existing site mappings and sample annotations.
 ROOT = "analysis/boxb_in_vitro_sequencing"
-SELECTION_FILE = f"{ROOT}/annotations/fig2e_selection.csv"
+SELECTION_FILE = f"{ROOT}/annotations/recorder_context_heatmap_selection.csv"
 SITE_FILE = f"{ROOT}/annotations/recorder_context_selection.csv"
 POSITION_FILE = f"{ROOT}/annotations/recorder_positions.csv"
 SAMPLE_FILE = f"{ROOT}/annotations/sample_info.csv"
 BARCODE_FILE = f"{ROOT}/annotations/barcode_annotations.csv"
 COUNT_DIRECTORY = f"{ROOT}/data/summary_stats_combined"
-SITE_OUTPUT = f"{ROOT}/tables/fig2e_site_summary.csv"
-OUTPUT_FILE = f"{ROOT}/tables/fig2e_context_summary.csv"
+SITE_OUTPUT = f"{ROOT}/tables/recorder_context_heatmap_sites.csv"
+OUTPUT_FILE = f"{ROOT}/tables/recorder_context_heatmap.csv"
 KEYS = ["sample_id", "position_id", "target_pos_to_boxb", "target_dist"]
 EXPECTED_SAMPLES, EXPECTED_CONTEXTS, EXPECTED_BACKGROUNDS = 2, 16, 64
 EXPECTED_SITES, INSERT_LENGTH = 4, 5
